@@ -1,0 +1,24 @@
+Build.PL
+Changes
+lib/Sub/Throttler.pm
+lib/Sub/Throttler/Limit.pm
+lib/Sub/Throttler/Rate/EV.pm
+MANIFEST			This list of files
+README
+t/.perlcriticrc
+t/00.load.t
+t/01.export-ALL.t
+t/01.export-custom.t
+t/01.export-plugin.t
+t/01.export.t
+t/bug-release-limit.t
+t/done-error.t
+t/limit.t
+t/manifest.t
+t/perlcritic.t
+t/pod-coverage.t
+t/pod.t
+t/rate.t
+t/throttle.t
+META.yml
+META.json

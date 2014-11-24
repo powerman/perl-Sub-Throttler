@@ -1,0 +1,39 @@
+---
+abstract: 'Rate limit sync and async function calls'
+author:
+  - 'Alex Efros <powerman@cpan.org>'
+build_requires:
+  Pod::Coverage: 0.18
+  Test::CheckManifest: 0.9
+  Test::Exception: 0
+  Test::More: 0
+  Test::Perl::Critic: 0
+  Test::Pod: 1.22
+  Test::Pod::Coverage: 1.08
+configure_requires:
+  Module::Build: 0
+dynamic_config: 1
+generated_by: 'Module::Build version 0.42, CPAN::Meta::Converter version 2.133380'
+license: mit
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Sub-Throttler
+provides:
+  Sub::Throttler:
+    file: lib/Sub/Throttler.pm
+    version: v0.1.1
+  Sub::Throttler::Limit:
+    file: lib/Sub/Throttler/Limit.pm
+    version: v0.1.1
+  Sub::Throttler::Rate::EV:
+    file: lib/Sub/Throttler/Rate/EV.pm
+    version: v0.1.1
+requires:
+  EV: 0
+  Perl6::Export::Attrs: 0
+  perl: 5.010001
+  version: 0.77
+resources:
+  license: http://www.opensource.org/licenses/mit-license.php
+version: v0.1.1

@@ -92,18 +92,18 @@ throws_ok { $throttle->acquire('id1', 'key1', 1) } qr/already acquired/,
 #   * возвращает истину/ложь в зависимости от того, удалось ли выделить
 #     $quantity ресурсов для $key
 
-$t = EV::periodic 0, 0.02, 0, sub { EV::break };
+$t = EV::periodic 0, 0.2, 0, sub { EV::break };
 EV::run;
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5, period => 0.02);
+$throttle = Sub::Throttler::Rate::EV->new(limit => 5, period => 0.2);
 ok $throttle->acquire('id1', 'key1', 4),
     'return true for $key';
 ok !$throttle->acquire('id2', 'key1', 2),
     'return false for $key';
 
-$t = EV::timer 0.01, 0, sub { EV::break };
+$t = EV::timer 0.1, 0, sub { EV::break };
 EV::run;
 ok !$throttle->acquire('id2', 'key1', 2);
-$t = EV::timer 0.01, 0, sub { EV::break };
+$t = EV::timer 0.1, 0, sub { EV::break };
 EV::run;
 ok $throttle->acquire('id2', 'key1', 2);
 
@@ -193,14 +193,14 @@ ok !$throttle->acquire('id3', 'key2', 1);
 
 #     - под $id был выделен один $key, период другой
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 2, period => 0.01);
+$throttle = Sub::Throttler::Rate::EV->new(limit => 2, period => 0.1);
 $throttle->acquire('id1', 'key1', 1);
 $throttle->acquire('id2', 'key2', 2);
 ok !$throttle->acquire('id3', 'key1', 2);
 ok !$throttle->acquire('id3', 'key2', 1);
 is $throttle->used('key1'), 1;
 is $throttle->used('key2'), 2;
-$t = EV::timer 0.01, 0, sub { EV::break };
+$t = EV::timer 0.1, 0, sub { EV::break };
 EV::run;
 is $throttle->used('key1'), 0;
 is $throttle->used('key2'), 0;
@@ -297,15 +297,19 @@ is $Flush, 1;
 
 #   * Sub::Throttler::throttle_flush() вызывается каждый period (не важно,
 #     освободились какие-то ресурсы, или нет)
+#     FIXME на самом деле во-первых throttle_flush() не будет вызываться
+#     если все ресурсы освобождены (т.к. таймер приостанавливается), а
+#     во-вторых его нет смысла вызывать если никакие ресурсы не
+#     освободились
 
 $Flush = 0;
-$throttle = Sub::Throttler::Rate::EV->new(period => 0.05);
+$throttle = Sub::Throttler::Rate::EV->new(period => 0.5);
 $throttle->acquire('id1', 'key1', 1);
-$t = EV::timer 0.05, 0, sub { EV::break };
+$t = EV::timer 0.5, 0, sub { EV::break };
 EV::run;
 is $Flush, 1,
     'throttle_flush() called every period';
-$t = EV::timer 0.05, 0, sub { EV::break };
+$t = EV::timer 0.5, 0, sub { EV::break };
 EV::run;
 is $Flush, 2;
 

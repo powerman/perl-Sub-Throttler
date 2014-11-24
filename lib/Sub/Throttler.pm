@@ -6,7 +6,7 @@ use utf8;
 use feature ':5.10';
 use Carp;
 
-use version; our $VERSION = qv('0.1.1');    # REMINDER: update Changes
+use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
 
 # REMINDER: update dependencies in Build.PL
 use Perl6::Export::Attrs;

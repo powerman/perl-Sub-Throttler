@@ -7,7 +7,7 @@ use feature ':5.10';
 use Carp;
 our @CARP_NOT = qw( Sub::Throttler );
 
-use version; our $VERSION = qv('0.1.1');    # REMINDER: update Changes
+use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
 
 # REMINDER: update dependencies in Build.PL
 use Sub::Throttler qw( :plugin );

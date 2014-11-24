@@ -1,0 +1,11 @@
+syntax: glob
+
+Build
+_build
+blib
+cover_db
+MYMETA.*
+*.tar.gz
+
+.*.swp
+*.bak

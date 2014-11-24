@@ -28,6 +28,13 @@ sub period {
     return $self->{period} // 1;
 }
 
+# TODO сделать $data=dump() и restore($data), только для Rate и Periodic,
+# restore() восстанавливает занятые ресурсы без привязывания их к id
+# (т.е. без возможности их форсировано освободить), формат $data -
+# недокументированная perl-структура (сериализация - задача юзера)
+
+# TODO switch to sliding window algo
+# TODO keep current algo as Periodic::EV
 sub acquire {
     my $self = shift;
     my $res = $self->SUPER::acquire(@_);
@@ -52,6 +59,8 @@ sub _tick {
             $self->{acquired}{$id}{$key} = 0;
         }
     }
+    # TODO OPTIMIZATION не вызывать throttle_flush() если никакие ресурсы
+    # не освободились
     throttle_flush();
     if (!keys %{ $self->{acquired} }) {
         $self->{_t}->stop;

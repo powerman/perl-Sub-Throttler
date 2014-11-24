@@ -30,6 +30,7 @@ sub done_cb :Export {
     return sub { $done->(); $cb->(@_) };
 }
 
+# TODO удалить тэг :plugin
 sub throttle_add :Export(:plugin) {
     my ($throttle, $target) = @_;
     croak 'require 2 params' if 2 != @_;
@@ -72,6 +73,7 @@ TASK:
             my %acquired;
             for (@Throttles) {
                 my ($throttle, $target) = @{$_};
+                # TODO пусть $target возвращает хеш вместо 4-х разных вариантов
                 my ($key, $quantity) = $target->($this, $name, @params);
                 next if !defined $key;
                 if (!ref $key) {
@@ -190,7 +192,11 @@ sub _me {
     croak 'impossible to throttle anonymous function' if $func =~ /::__ANON__\z/ms;
     my $code = \&{$func};
     my ($pkg, $name) = $func =~ /\A(.*)::(.*)\z/ms;
+    # FIXME probably should check isa($pkg) instead of 'eq $pkg'
+    # TODO add test for throttling subclasses (both class and object methods)
     my $is_method = defined $args->[0] && (ref $args->[0] || $args->[0]) eq $pkg;
+    # OPTIMIZATION  Replace original sub to avoid repeating above code on
+    #               next calls to that sub.
     ## no critic (ProhibitProlongedStrictureOverride ProhibitNoWarnings)
     no strict 'refs';
     no warnings 'redefine';

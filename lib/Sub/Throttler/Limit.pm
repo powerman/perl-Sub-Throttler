@@ -92,9 +92,14 @@ sub apply_to_methods {
 sub limit {
     my ($self, $limit) = @_;
     if (1 == @_) {
+        # FIXME перенести значение по умолчанию в new() и перестать
+        # использовать внутри модулей функцию если достаточно обратиться
+        # напрямую к полю
         return $self->{limit} // 1;
     }
     $self->{limit} = $limit;
+    # TODO OPTIMIZATION вызывать throttle_flush() нужно только если
+    # {limit} увеличился
     throttle_flush();
     return $self;
 }
@@ -107,6 +112,9 @@ sub release_unused {
     return _release(@_);
 }
 
+# TODO удалить used() - в тестах лезть прямо в ->{used}
+# TODO стоит вынести new(), apply_to*() в Sub::Throttler::algo, плюс
+# добавить в него заглушки для acquire(), release*()
 sub used {
     my ($self, $key, $quantity) = @_;
     if (2 == @_) {

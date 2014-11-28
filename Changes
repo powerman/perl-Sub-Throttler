@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 0.2.0   
+	Add support for class methods and subclasses.
 	User func $target return HASHREF instead of 4 other ways.
 	Fix tests to be less fragile.
 

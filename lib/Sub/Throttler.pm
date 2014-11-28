@@ -184,8 +184,6 @@ sub _me {
     croak 'impossible to throttle anonymous function' if $func =~ /::__ANON__\z/ms;
     my $code = \&{$func};
     my ($pkg, $name) = $func =~ /\A(.*)::(.*)\z/ms;
-    # FIXME probably should check isa($pkg) instead of 'eq $pkg'
-    # TODO add test for throttling subclasses (both class and object methods)
     my $is_method = defined $args->[0] && (ref $args->[0] || $args->[0]) eq $pkg;
     # OPTIMIZATION  Replace original sub to avoid repeating above code on
     #               next calls to that sub.
@@ -196,7 +194,9 @@ sub _me {
         my ($self, @params) = @_;
         my $done = Sub::Throttler::__done->new($self.q{->}.$name);
         push @{$queue}, [$done, $name, $self, $code, @params];
-        weaken $queue->[-1][2];
+        if (ref $self) {
+            weaken $queue->[-1][2];
+        }
         throttle_flush();
         return;
     } : sub {

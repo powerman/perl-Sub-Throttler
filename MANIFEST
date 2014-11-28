@@ -14,6 +14,7 @@ t/01.export-custom.t
 t/01.export-plugin.t
 t/01.export.t
 t/bug-release-limit.t
+t/bug-subclass.t
 t/done-error.t
 t/limit.t
 t/manifest.t

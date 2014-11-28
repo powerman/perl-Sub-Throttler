@@ -99,12 +99,13 @@ sub method_delay {
     my $done = &throttle_me || return;
     my $self = shift;
     my $t;
-    $t = EV::timer 0.01, 0, done_cb($done, $self, sub {
-        my ($self, @p) = @_;
-        $t = undef;
-        push @Result, $p[0];
-    }, @_);
+    $t = EV::timer 0.01, 0, done_cb($done, $self, '_method_delay', \$t, @_);
     return;
+}
+
+sub _method_delay {
+    my ($self, $t, @p) = @_;
+    push @Result, $p[0];
 }
 
 sub top_func {

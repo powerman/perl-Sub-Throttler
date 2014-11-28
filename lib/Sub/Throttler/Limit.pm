@@ -10,6 +10,7 @@ our @CARP_NOT = qw( Sub::Throttler );
 use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
 
 # REMINDER: update dependencies in Build.PL
+use Scalar::Util qw( blessed );
 use Sub::Throttler qw( :plugin );
 
 
@@ -60,6 +61,8 @@ sub apply_to_functions {
 
 sub apply_to_methods {
     my ($self, $class_or_obj, @func) = @_;
+    croak 'require class or object'
+        if ref $class_or_obj && !blessed($class_or_obj);
     croak 'method must not contain ::' if grep {/::/ms} @func;
     my %func = map { $_ => DEFAULT_KEY } @func;
     if (1 == @_) {
@@ -69,23 +72,24 @@ sub apply_to_methods {
             return $key ? {$key=>1} : undef;
         });
     } elsif (ref $class_or_obj) {
+        my $obj = $class_or_obj;
         $self->apply_to(sub {
             my ($this, $name) = @_;
             my $key
-              = !$this || !ref $this || $this != $class_or_obj  ? undef
+              = !$this || !ref $this || $this != $obj           ? undef
               : @func                                           ? $func{$name}
               :                                                   DEFAULT_KEY
               ;
             return $key ? {$key=>1} : undef;
         });
     } else {
+        my $class = $class_or_obj;
         $self->apply_to(sub {
             my ($this, $name) = @_;
-            my $class = !$this ? q{} : ref $this || $this;
             my $key
-              = !$this || $class ne $class_or_obj   ? undef
-              : @func                               ? $func{$name}
-              :                                       DEFAULT_KEY
+              = !eval {local $SIG{__DIE__}; $this->isa($class)} ? undef
+              : @func                                           ? $func{$name}
+              :                                                   DEFAULT_KEY
               ;
             return $key ? {$key=>1} : undef;
         });

@@ -103,7 +103,8 @@ Sub::Throttler::Rate::EV - throttle by rate (quantity per time)
     $throttle->apply_to(sub {
       my ($this, $name, @params) = @_;
       ...
-      return undef or $key or ($key,$quantity) or \@keys or (\@keys,\@quantities);
+      return;   # OR
+      return { key1=>$quantity1, ... };
     });
     
     # --- Manual resource management

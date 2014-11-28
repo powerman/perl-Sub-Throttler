@@ -11,7 +11,7 @@ use Sub::Throttler::Limit;
 
 use EV;
 
-my (@Result, $t);
+my (@Result, @Wait, $t);
 my ($throttle, $throttle2);
 my $obj = new();
 
@@ -191,7 +191,7 @@ is_deeply \@Result, [10,30,20,40],
 #   * один add() - ограничения есть
 
 $throttle = Sub::Throttler::Limit->new->apply_to(sub {
-    return ('key', 2);
+    return { key => 2 };
 });
 
 @Result = ();
@@ -219,7 +219,7 @@ is_deeply \@Result, [10,30,20,40],
 $throttle2 = Sub::Throttler::Limit->new->apply_to(sub {
     my ($this, $name, @p) = @_;
     if (!$this) {
-        return ('key', 2);
+        return { key => 2 };
     } else {
         return;
     }
@@ -313,11 +313,11 @@ throttle_del();
 $throttle = Sub::Throttler::Limit->new
     ->apply_to(sub {
         my ($this, $name) = @_;
-        return $name eq 'method' ? 'key1' : undef;
+        return $name eq 'method' ? {key1=>1} : undef;
     })
     ->apply_to(sub {
         my ($this, $name) = @_;
-        return $name eq 'method' ? 'key2' : undef;
+        return $name eq 'method' ? {key2=>1} : undef;
     });
 
 @Result = ();
@@ -386,6 +386,21 @@ is_deeply \@Target, [$obj, 'method', 30,40],
     'param. method';
 
 #   * $target-функции возвращают:
+#     - ()
+
+throttle_del();
+$throttle = Sub::Throttler::Limit->new;
+throttle_add($throttle, sub {
+    return;
+});
+
+@Result = ();
+
+$throttle->limit(0);
+func(10);
+is_deeply \@Result, [10],
+    'return ()';
+
 #     - undef
 
 throttle_del();
@@ -401,126 +416,59 @@ func(10);
 is_deeply \@Result, [10],
     'return undef';
 
-#     - 0
+#     - {}
 
 throttle_del();
 $throttle = Sub::Throttler::Limit->new;
 throttle_add($throttle, sub {
-    return 0;
+    return {};
 });
 
 @Result = ();
-$throttle->used(0, 1);
-func(10);
-is_deeply \@Result, [],
-    'return 0';
-$throttle->used(0, 0);
-is_deeply \@Result, [10];
 
-#     - ''
+$throttle->limit(0);
+func(10);
+is_deeply \@Result, [10],
+    'return {}';
+
+#     - '' => 1
 
 throttle_del();
 $throttle = Sub::Throttler::Limit->new;
 throttle_add($throttle, sub {
-    return '';
+    return { '' => 1 };
 });
 
 @Result = ();
 $throttle->used('', 1);
 func(10);
 is_deeply \@Result, [],
-    'return ""';
+    'return {""=>1}';
 $throttle->used('', 0);
 is_deeply \@Result, [10];
 
-#     - 'key'
+#     - $key => $quantity
 
 throttle_del();
 $throttle = Sub::Throttler::Limit->new;
 throttle_add($throttle, sub {
-    return 'key';
+    return { key => 2 };
 });
 
 @Result = ();
 $throttle->used('key', 1);
 func(10);
 is_deeply \@Result, [],
-    'return "key"';
-$throttle->used('key', 0);
-is_deeply \@Result, [10];
-
-#     - $key, $quantity
-
-throttle_del();
-$throttle = Sub::Throttler::Limit->new;
-throttle_add($throttle, sub {
-    return ('key', 2);
-});
-
-@Result = ();
-$throttle->used('key', 1);
-func(10);
-is_deeply \@Result, [],
-    'return "key", "quantity"';
+    'return {key=>2}';
 $throttle->limit(3);
 is_deeply \@Result, [10];
 
-#     - \@key
-
-throttle_del();
-$throttle = Sub::Throttler::Limit->new;
-throttle_add($throttle, sub {
-    return ['key1', 'key2', 'key3'];
-});
-
-@Result = ();
-$throttle->used('key1', 1);
-func(10);
-is_deeply \@Result, [],
-    'no key1 of 3 keys';
-$throttle->used('key2', 1);
-$throttle->used('key1', 0);
-is_deeply \@Result, [],
-    'no key2 of 3 keys';
-$throttle->used('key3', 1);
-$throttle->used('key2', 0);
-is_deeply \@Result, [],
-    'no key3 of 3 keys';
-$throttle->used('key3', 0);
-is_deeply \@Result, [10],
-    '3 keys of 3 keys';
-
-#     - \@key, $quantity
+#     - $key1 => $quantity1, ...
 
 throttle_del();
 $throttle = Sub::Throttler::Limit->new(limit => 5);
 throttle_add($throttle, sub {
-    return ['key1', 'key2', 'key3'], 3;
-});
-
-@Result = ();
-$throttle->used('key1', 3);
-func(10);
-is_deeply \@Result, [],
-    'no key1 of 3 keys';
-$throttle->used('key2', 3);
-$throttle->used('key1', 2);
-is_deeply \@Result, [],
-    'no key2 of 3 keys';
-$throttle->used('key3', 3);
-$throttle->used('key2', 2);
-is_deeply \@Result, [],
-    'no key3 of 3 keys';
-$throttle->used('key3', 2);
-is_deeply \@Result, [10],
-    '3 keys of 3 keys';
-
-#     - \@key, \@quantities
-
-throttle_del();
-$throttle = Sub::Throttler::Limit->new(limit => 5);
-throttle_add($throttle, sub {
-    return ['key1', 'key2', 'key3'], [1,2,3];
+    return { key1=>1, key2=>2, key3=>3 };
 });
 
 @Result = ();
@@ -540,14 +488,38 @@ $throttle->used('key3', 2);
 is_deeply \@Result, [10],
     '3 keys of 3 keys';
 
-#     - некорректный результат: $key HASHREF или CODEREF
+#     - некорректный результат: SCALAR, ARRAYREF или CODEREF
 
 throttle_del();
 throttle_add(Sub::Throttler::Limit->new, sub {
-    return {};
+    return 0;
 });
 
-throws_ok { wait_err(); func() } qr/bad key/;
+throws_ok { wait_err(); func() } qr/HASHREF/;
+get_warn(); Sub::Throttler::_reset();
+
+throttle_del();
+throttle_add(Sub::Throttler::Limit->new, sub {
+    return q{};
+});
+
+throws_ok { wait_err(); func() } qr/HASHREF/;
+get_warn(); Sub::Throttler::_reset();
+
+throttle_del();
+throttle_add(Sub::Throttler::Limit->new, sub {
+    return 'key';
+});
+
+throws_ok { wait_err(); func() } qr/HASHREF/;
+get_warn(); Sub::Throttler::_reset();
+
+throttle_del();
+throttle_add(Sub::Throttler::Limit->new, sub {
+    return ['key',1];
+});
+
+throws_ok { wait_err(); func() } qr/HASHREF/;
 get_warn(); Sub::Throttler::_reset();
 
 throttle_del();
@@ -555,15 +527,14 @@ throttle_add(Sub::Throttler::Limit->new, sub {
     return sub{};
 });
 
-throws_ok { wait_err(); func() } qr/bad key/;
+throws_ok { wait_err(); func() } qr/HASHREF/;
 get_warn(); Sub::Throttler::_reset();
 
-#     - некорректный результат: $quantity не положительное число или HASHREF
-#       или CODEREF или не положительное число внутри ARRAYREF
+#     - некорректный результат: $quantity не положительное число
 
 throttle_del();
 throttle_add(Sub::Throttler::Limit->new, sub {
-    return 'key1', -1;
+    return {key1=>-1};
 });
 
 throws_ok { wait_err(); func() } qr/quantity must be positive/;
@@ -571,7 +542,7 @@ get_warn(); Sub::Throttler::_reset();
 
 throttle_del();
 throttle_add(Sub::Throttler::Limit->new, sub {
-        return 'key1', 0;
+    return {key1=>0};
 });
 
 throws_ok { wait_err(); func() } qr/quantity must be positive/;
@@ -579,7 +550,15 @@ get_warn(); Sub::Throttler::_reset();
 
 throttle_del();
 throttle_add(Sub::Throttler::Limit->new, sub {
-    return 'key1', {};
+    return {key1=>'five'};
+});
+
+throws_ok { wait_err(); func() } qr/quantity must be positive/;
+get_warn(); Sub::Throttler::_reset();
+
+throttle_del();
+throttle_add(Sub::Throttler::Limit->new, sub {
+    return {key1=>\1};
 });
 
 throws_ok { wait_err(); func() } qr/bad quantity/;
@@ -587,7 +566,7 @@ get_warn(); Sub::Throttler::_reset();
 
 throttle_del();
 throttle_add(Sub::Throttler::Limit->new, sub {
-    return 'key1', sub {};
+    return {key1=>[]};
 });
 
 throws_ok { wait_err(); func() } qr/bad quantity/;
@@ -595,44 +574,42 @@ get_warn(); Sub::Throttler::_reset();
 
 throttle_del();
 throttle_add(Sub::Throttler::Limit->new, sub {
-    return ['key1','key2','key3'], [1,-1,2];
+    return {key1=>{}};
+});
+
+throws_ok { wait_err(); func() } qr/bad quantity/;
+get_warn(); Sub::Throttler::_reset();
+
+throttle_del();
+throttle_add(Sub::Throttler::Limit->new, sub {
+    return {key1=>sub {}};
+});
+
+throws_ok { wait_err(); func() } qr/bad quantity/;
+get_warn(); Sub::Throttler::_reset();
+
+throttle_del();
+throttle_add(Sub::Throttler::Limit->new(limit=>2), sub {
+    return {key1=>1,key2=>-1,key3=>2};
 });
 
 throws_ok { wait_err(); func() } qr/quantity must be positive/;
 get_warn(); Sub::Throttler::_reset();
 
 throttle_del();
-throttle_add(Sub::Throttler::Limit->new, sub {
-        return ['key1','key2','key3'], [1,0,2];
+throttle_add(Sub::Throttler::Limit->new(limit=>2), sub {
+    return {key1=>1,key2=>0,key3=>2};
 });
 
 throws_ok { wait_err(); func() } qr/quantity must be positive/;
 get_warn(); Sub::Throttler::_reset();
 
-#     - некорректный результат: кол-во элементов @key != @quantities
-
 throttle_del();
-throttle_add(Sub::Throttler::Limit->new, sub {
-        return ['key1'], [];
+throttle_add(Sub::Throttler::Limit->new(limit=>2), sub {
+    return {key1=>1,key2=>'five',key3=>2};
 });
 
-throws_ok { wait_err(); func() } qr/unmatched keys and quantities/;
-get_warn(); Sub::Throttler::_reset();
-
-throttle_del();
-throttle_add(Sub::Throttler::Limit->new, sub {
-        return ['key1','key2','key3'], [1,2];
-});
-
-throws_ok { wait_err(); func() } qr/unmatched keys and quantities/;
-get_warn(); Sub::Throttler::_reset();
-
-throttle_del();
-throttle_add(Sub::Throttler::Limit->new, sub {
-            return ['key1','key2'], [1,2,3,4];
-});
-
-throws_ok { wait_err(); func() } qr/unmatched keys and quantities/;
+throws_ok { wait_err(); func() } qr/quantity must be positive/;
 get_warn(); Sub::Throttler::_reset();
 
 # - throttle_me и Sub::Throttler::me_asap
@@ -644,7 +621,7 @@ get_warn(); Sub::Throttler::_reset();
 throttle_del();
 $throttle = Sub::Throttler::Limit->new;
 throttle_add($throttle, sub {
-    return ('key', 2);
+    return { key => 2 };
 });
 
 @Result = ();
@@ -661,7 +638,7 @@ is_deeply \@Result, [20,40,10,30],
 throttle_del();
 $throttle = Sub::Throttler::Limit->new(limit => 0);
 throttle_add($throttle, sub {
-        return 'key';
+        return { key => 1 };
 });
 
 @Result = ();
@@ -693,7 +670,7 @@ $obj = new();
 throttle_del();
 $throttle = Sub::Throttler::Limit->new;
 throttle_add($throttle, sub {
-    return ('key', 2);
+    return { key => 2 };
 });
 
 @Result = ();
@@ -719,7 +696,7 @@ package main;
 
 throttle_del();
 throttle_add(Sub::Throttler::Test->new, sub {
-    return 'key';
+    return { key => 1 };
 });
 
 @Result = ();
@@ -822,7 +799,7 @@ is_deeply \@Result, ['release'],
 throttle_del();
 $throttle = Sub::Throttler::Limit->new;
 throttle_add($throttle, sub {
-    return 'key';
+    return { key => 1 };
 });
 
 $obj = new();
@@ -871,19 +848,20 @@ is_deeply \@Result, ['flush','flush','flush','top_method','flush','flush','flush
 throttle_del();
 $throttle = Sub::Throttler::Limit->new;
 throttle_add($throttle, sub {
-    return ['key1', 'key2'];
+    return { key1 => 1, key2 => 1 };
 });
 
 $throttle->used('key2', 1);
 @Result = ();
 func(10);
-is_deeply \@Result, ['flush','flush'];
+@Wait = @Result == 1 ? ['flush'] : ['flush','flush']; # depends on resource acquiring order
+is_deeply \@Result, @Wait;
 $t = EV::timer 0.01, 0, sub { EV::break };
 EV::run;
-is_deeply \@Result, ['flush','flush'];
+is_deeply \@Result, @Wait;
 $t = EV::timer 0.01, 0, sub { EV::break };
 EV::run;
-is_deeply \@Result, ['flush','flush'];
+is_deeply \@Result, @Wait;
 $throttle->used('key2', 0);
 
 #   * если в процессе работы throttle_flush в очередь (любую) добавляются новые
@@ -892,7 +870,7 @@ $throttle->used('key2', 0);
 throttle_del();
 $throttle = Sub::Throttler::Limit->new(limit => 0);
 throttle_add($throttle, sub {
-    return 'key';
+    return { key => 1 };
 });
 
 @Result = ();

@@ -33,7 +33,7 @@ push @t, EV::timer 0.1, 0, sub { $Timeout = 1 };
 
 throttle_add(Sub::Throttler::Limit->new(limit => 3), sub {
     my ($type, $name, @params) = @_;
-    return ($name, 2);
+    return { $name => 2 };
 });
 
 @Result = ();

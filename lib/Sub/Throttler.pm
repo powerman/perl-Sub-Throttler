@@ -47,7 +47,7 @@ sub throttle_del :Export(:plugin) {
     return;
 }
 
-sub throttle_flush :Export(:plugin) { ## no critic (ProhibitExcessComplexity)
+sub throttle_flush :Export(:plugin) {
     if ($IN_flush) {
         if (!$IN_flush_ignore_recursion) {
             $IN_flush_recursion = 1;
@@ -73,31 +73,23 @@ TASK:
             my %acquired;
             for (@Throttles) {
                 my ($throttle, $target) = @{$_};
-                # TODO пусть $target возвращает хеш вместо 4-х разных вариантов
-                my ($key, $quantity) = $target->($this, $name, @params);
-                next if !defined $key;
-                if (!ref $key) {
-                    $key = [ $key ];
-                }
-                die "Sub::Throttler: target returns bad key: $key\n" if ref $key ne 'ARRAY';
-                next if !@{$key};
-                $quantity //= 1;
-                if (!ref $quantity) {
-                    $quantity = [ ($quantity) x @{$key} ];
-                }
-                die "Sub::Throttler: target returns bad quantity: $quantity\n" if ref $quantity ne 'ARRAY';
-                die "Sub::Throttler: target returns unmatched keys and quantities: [@{$key}] [@{$quantity}]\n"
-                    if @{$key} != @{$quantity};
+                my $resources = $target->($this, $name, @params);
+                next if !defined $resources;
+                die "Sub::Throttler: target returns not a HASHREF: $resources\n"
+                    if ref $resources ne 'HASH';
+                next if !keys %{$resources};
                 my $acquired = 0;
-                for my $i (0 .. $#{$key}) {
-                    if ($throttle->acquire($id, $key->[$i], $quantity->[$i])) {
+                while (my ($key, $quantity) = each %{$resources}) {
+                    die "Sub::Throttler: target returns bad quantity for '$key': $quantity\n"
+                        if ref $quantity;
+                    if ($throttle->acquire($id, $key, $quantity)) {
                         $acquired++;
                     }
                     else {
                         last;
                     }
                 }
-                if ($acquired == @{$key}) {
+                if ($acquired == keys %{$resources}) {
                     $acquired{$throttle} = $throttle;
                 }
                 else {
@@ -389,7 +381,7 @@ same string (say, C<"default">) and same quantity of this "resource": C<1>.
     $throttle->apply_to(sub {
         my ($this, $name, @params) = @_;
         if (!$this && $name eq 'Package::func') {
-            return 'default', 1;    # require 1 resource named "default"
+            return { default=>1 };  # require 1 resource named "default"
         }
         return;                     # do not throttle other functions/methods
     });
@@ -402,7 +394,7 @@ exact object and method name, and their parameters) define several
         my ($this, $name, @params) = @_;
         if (ref $this && $this eq $target_object && $name eq 'method') {
             # require 2 "some" and 10 "other" resources
-            return ['some','other'], [2,10];
+            return { some=>2, other=>10 };
         }
         return;                     # do not throttle other functions/methods
     });
@@ -697,11 +689,8 @@ for same function/method isn't available.
         # $name is a function or method name
         # @params is function/method params
         ...
-        return undef;                   # OR
-        return $key;                    # OR
-        return ($key,$quantity);        # OR
-        return \@keys;                  # OR
-        return (\@keys,\@quantities);
+        return;                         # OR
+        return {key1=>$quantity1, ...};
     });
 
 This function usually used to implement helper methods in algorithm like

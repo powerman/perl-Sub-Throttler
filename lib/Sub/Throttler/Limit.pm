@@ -48,11 +48,12 @@ sub apply_to_functions {
         map {/::/ms ? $_ : caller().q{::}.$_} @func;
     $self->apply_to(sub {
         my ($this, $name) = @_;
-        return
-            $this   ? undef
+        my $key
+          = $this   ? undef
           : @func   ? $func{$name}
           :           DEFAULT_KEY
           ;
+        return $key ? {$key=>1} : undef;
     });
     return $self;
 }
@@ -64,26 +65,29 @@ sub apply_to_methods {
     if (1 == @_) {
         $self->apply_to(sub {
             my ($this) = @_;
-            return $this ? DEFAULT_KEY : undef;
+            my $key = $this ? DEFAULT_KEY : undef;
+            return $key ? {$key=>1} : undef;
         });
     } elsif (ref $class_or_obj) {
         $self->apply_to(sub {
             my ($this, $name) = @_;
-            return
-                !$this || !ref $this || $this != $class_or_obj  ? undef
+            my $key
+              = !$this || !ref $this || $this != $class_or_obj  ? undef
               : @func                                           ? $func{$name}
               :                                                   DEFAULT_KEY
               ;
+            return $key ? {$key=>1} : undef;
         });
     } else {
         $self->apply_to(sub {
             my ($this, $name) = @_;
             my $class = !$this ? q{} : ref $this || $this;
-            return
-                !$this || $class ne $class_or_obj   ? undef
+            my $key
+              = !$this || $class ne $class_or_obj   ? undef
               : @func                               ? $func{$name}
               :                                       DEFAULT_KEY
               ;
+            return $key ? {$key=>1} : undef;
         });
     }
     return $self;
@@ -211,13 +215,13 @@ C<limit>) throttling same or different functions/methods.
     $throttle_tasks->apply_to(sub {
         my ($this, $name, @param) = @_;
         if ($name eq 'small_task') {
-            return 'task', 1;
+            return { task => 1 };
         } elsif ($name eq 'normal_task') {
-            return 'task', 2;
+            return { task => 2 };
         } elsif ($name eq 'large_task') {
-            return 'task', 3;
+            return { task => 3 };
         } elsif ($name eq 'side_task') {
-            return 'side', 1;
+            return { side => 1 };
         }
         return;
     });
@@ -227,7 +231,7 @@ C<limit>) throttling same or different functions/methods.
     $throttle_cpu->apply_to(sub {
         my ($this, $name, @param) = @_;
         if ($name eq 'side_task') {
-            return 'default', $param[0];
+            return { default => $param[0] };
         }
         return;
     });
@@ -329,12 +333,11 @@ All affected methods will use C<1> resource named C<"default">.
             # $this eq $object
             # $name eq 'method'
         }
+        return;                     # do no throttle it
         return undef;               # do no throttle it
-        return 'key';               # throttle it by acquiring 1 resource 'key'
-        return ('key',5);           # throttle it by acquiring 5 resources 'key'
-        return ['key1','key2'];     # throttle it by atomically acquiring:
-                                    #   1 resource 'key1' and 1 resource 'key2'
-        return (['k1','k2'],[2,5]); # throttle it by atomically acquiring:
+        return {};                  # do no throttle it
+        return { key=>1 };          # throttle it by acquiring 1 resource 'key'
+        return { k1=>2, k2=>5 };    # throttle it by atomically acquiring:
                                     #   2 resources 'k1' and 5 resources 'k2'
     });
 

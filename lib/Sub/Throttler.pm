@@ -10,7 +10,7 @@ use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
 
 # REMINDER: update dependencies in Build.PL
 use Perl6::Export::Attrs;
-use Scalar::Util qw( weaken refaddr );
+use Scalar::Util qw( weaken refaddr blessed );
 
 
 use constant CALLER_SUBROUTINE  => 3;
@@ -24,10 +24,29 @@ my $IN_flush_ignore_recursion = 0;
 
 
 sub done_cb :Export {
-    my ($done, $cb_or_obj, @p) = @_;
-    croak 'require ($obj,$method) or ($cb)' if !ref $cb_or_obj;
-    my $cb = ref $cb_or_obj ne 'CODE' ? _weak_cb($cb_or_obj, @p) : sub { $cb_or_obj->(@p, @_) };
-    return sub { $done->(); $cb->(@_) };
+    my ($done, $cb_or_obj_or_class, @p) = @_;
+    if (ref $cb_or_obj_or_class eq 'CODE') {
+        my $cb = $cb_or_obj_or_class;
+        return sub { $done->(); $cb->(@p, @_) };
+    }
+    elsif (blessed($cb_or_obj_or_class)) {
+        my $obj = $cb_or_obj_or_class;
+        weaken($obj);
+        my $method = shift @p;
+        croak 'second param must be $method'
+            if !$method || (ref $method && ref $method ne 'CODE');
+        return sub { $done->(); $obj && $obj->$method(@p, @_) };
+    }
+    elsif (defined $cb_or_obj_or_class && !ref $cb_or_obj_or_class) {
+        my $class = $cb_or_obj_or_class;
+        my $method = shift @p;
+        croak 'second param must be $method'
+            if !$method || (ref $method && ref $method ne 'CODE');
+        return sub { $done->(); $class->$method(@p, @_) };
+    }
+    else {
+        croak 'first param must be $cb or $obj or $class';
+    }
 }
 
 # TODO удалить тэг :plugin
@@ -228,12 +247,6 @@ sub _run_task {
         $code->($done, @params);
     }
     return;
-}
-
-sub _weak_cb {
-    my ($this, $method, @p) = @_;
-    weaken $this;
-    return sub { $this && $this->$method(@p, @_) };
 }
 
 
@@ -596,13 +609,13 @@ of normal queue.
         ...
     }, $extra1, $extra2);
 
-    my $cb = done_cb($done, $object, 'method');
+    my $cb = done_cb($done, $class_or_object, 'method');
     sub Class::Of::That::Object::method {
         my ($self, @params) = @_;
         ...
     }
 
-    my $cb = done_cb($done, $object, 'method', $extra1, $extra2);
+    my $cb = done_cb($done, $class_or_object, 'method', $extra1, $extra2);
     sub Class::Of::That::Object::method {
         my ($self, $extra1, $extra2, @params) = @_;
         ...
@@ -612,8 +625,8 @@ This is a simple helper function used to make sure you won't forget to
 call C<< $done->() >> in your async function/method with throttling support.
 
 First parameter must be C< $done > callback, then either callback function
-or object and name of it method, and then optionally any extra params for
-that callback function/object's method.
+or object (or class name) and name of it method, and then optionally any
+extra params for that callback function/object's method.
 
 Returns callback, which when called will first call C<< $done->() >> and then
 given callback function or object's method with any extra params (if any)

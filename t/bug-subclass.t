@@ -21,7 +21,7 @@ sub method {
     my $done = &throttle_me || return;
     my ($self, @p) = @_;
     $self->_start(@p);   # crash if $self isn't object/class
-    push @t, EV::timer 0.01, 0, done_cb($done, sub { $self->_end(@p) });
+    push @t, EV::timer 0.01, 0, done_cb($done, $self, '_end', @p);
     return;
 }
 sub _start {

@@ -19,7 +19,8 @@ use EV;
 sub new {
     my $self = shift->SUPER::new(@_);
     $self->{period} //= 1;
-    $self->{_t} = EV::periodic_ns 0, $self->{period}, 0, _weak_cb($self, \&_tick);
+    $self->{_t} = EV::periodic 0, $self->{period}, 0, _weak_cb($self, \&_tick);
+    $self->{_t}->keepalive(0);
     return $self;
 }
 
@@ -39,7 +40,7 @@ sub period {
 sub acquire {
     my $self = shift;
     if ($self->SUPER::acquire(@_)) {
-        $self->{_t}->start;
+        $self->{_t}->keepalive(1);
         return 1;
     }
     return;
@@ -49,6 +50,18 @@ sub release {
     my ($self, $id) = @_;
     croak sprintf '%s not acquired anything', $id if !$self->{acquired}{$id};
     delete $self->{acquired}{$id};
+    if (!keys %{ $self->{acquired} }) {
+        $self->{_t}->keepalive(0);
+    }
+    return $self;
+}
+
+sub release_unused {
+    my $self = shift;
+    $self->SUPER::release_unused(@_);
+    if (!keys %{ $self->{acquired} }) {
+        $self->{_t}->keepalive(0);
+    }
     return $self;
 }
 
@@ -64,11 +77,6 @@ sub _tick {
     if (keys %{ $self->{used} }) {
         $self->{used} = {};
         throttle_flush();
-    }
-    # Keep watcher inactive when no resources acquired to exit from event
-    # loop if user don't have own active watchers.
-    if (!keys %{ $self->{acquired} }) {
-        $self->{_t}->stop;
     }
     return;
 }

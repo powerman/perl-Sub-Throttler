@@ -139,9 +139,8 @@ This algorithm works like L<Sub::Throttler::Limit> with one difference:
 when current time is divisible by given period value all used resources
 will be made available for acquiring again.
 
-It use EV::timer, but tries to avoid keeping your event loop running when
-it doesn't needed anymore by stopping timer watcher at end of period if
-there are no acquired resources.
+It uses EV::timer, but will avoid keeping your event loop running when it
+doesn't needed anymore (if there are no acquired resources).
 
 
 =head1 EXPORTS

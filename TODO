@@ -38,3 +38,5 @@ Sub::Throttler::Periodic.
 - добавить throttle_it_sync()
   * сделать goto &func (для корректной работы wantarray/caller)
 
+Документировать поддержку анонимных функций через Sub::Util::set_subname.
+

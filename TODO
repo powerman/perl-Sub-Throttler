@@ -1,8 +1,4 @@
 
-Реализовать базовый класс для всех алгоритмов Sub::Throttler::algo
-путём вынесения в него new(), apply_to*() из Sub::Throttler::Limit.
-- удалить :plugin из Sub::Throttler
-
 Реализовать Sub::Throttler::Periodic - переименованный
 Sub::Throttler::Rate::EV, но не использующий EV а предоставляющий API для
 ручного выполнения tick (из цикла sleep-ов в sync sub).

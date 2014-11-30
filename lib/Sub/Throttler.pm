@@ -49,8 +49,7 @@ sub done_cb :Export {
     }
 }
 
-# TODO удалить тэг :plugin
-sub throttle_add :Export(:plugin) {
+sub throttle_add :Export {
     my ($throttle, $target) = @_;
     croak 'require 2 params' if 2 != @_;
     croak 'throttle must be an object' if !ref $throttle;
@@ -59,14 +58,14 @@ sub throttle_add :Export(:plugin) {
     return $throttle;
 }
 
-sub throttle_del :Export(:plugin) {
+sub throttle_del :Export {
     my ($throttle) = @_;
     @Throttles = grep { $throttle && $_->[0] != $throttle } @Throttles;
     throttle_flush();
     return;
 }
 
-sub throttle_flush :Export(:plugin) {
+sub throttle_flush :Export {
     if ($IN_flush) {
         if (!$IN_flush_ignore_recursion) {
             $IN_flush_recursion = 1;
@@ -349,7 +348,7 @@ occasional exceeding the quota because of crash/restart of your app.
 
 L<Sub::Throttler::Limit> implement algorithm to throttle based on quantity
 of used resources/limits. For example, it will let you limit an amount of
-simultaneous tasks. Also it's good base class for your own algorithms.
+simultaneous tasks.
 
 L<Sub::Throttler::Rate::EV> implement algorithm to throttle based on rate
 (quantity of used resources/limits per some period of time). For example,
@@ -443,11 +442,8 @@ Nothing by default, but all documented functions can be explicitly imported.
 
 Use tag C<:ALL> to import all of them.
 
-If you developing plugin for this module you can use tag C<:plugin> to
-import C<throttle_add>, C<throttle_del> and C<throttle_flush>.
 
-
-=head1 INTERFACE 
+=head1 INTERFACE
 
 =head2 Enable throttling for existing functions/methods
 
@@ -658,7 +654,7 @@ Example:
 
 =head2 Implementing throttle algorithms/plugins
 
-It's recommended to inherit your algorithm from L<Sub::Throttler::Limit>.
+It's recommended to inherit your algorithm from L<Sub::Throttler::algo>.
 
 Each plugin must provide these methods (they'll be called by throttling
 engine):
@@ -707,9 +703,9 @@ for same function/method isn't available.
     });
 
 This function usually used to implement helper methods in algorithm like
-L<Sub::Throttler::Limit/"apply_to">,
-L<Sub::Throttler::Limit/"apply_to_functions">,
-L<Sub::Throttler::Limit/"apply_to_methods">. But if algorithm doesn't
+L<Sub::Throttler::algo/"apply_to">,
+L<Sub::Throttler::algo/"apply_to_functions">,
+L<Sub::Throttler::algo/"apply_to_methods">. But if algorithm doesn't
 implement such helpers it may be used directly by user to apply some
 algorithm instance to selected functions/methods.
 

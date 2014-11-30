@@ -11,7 +11,7 @@ use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
 
 # REMINDER: update dependencies in Build.PL
 use parent qw( Sub::Throttler::Limit );
-use Sub::Throttler qw( :plugin );
+use Sub::Throttler qw( throttle_flush );
 use Scalar::Util qw( weaken );
 use EV;
 
@@ -136,10 +136,10 @@ there are no acquired resources.
 Nothing.
 
 
-=head1 INTERFACE 
+=head1 INTERFACE
 
 L<Sub::Throttler::Rate::EV> inherits all methods from L<Sub::Throttler::Limit>
-and implements new or replaces the following ones.
+and implements the following ones.
 
 =over
 
@@ -152,7 +152,7 @@ Create and return new instance of this algorithm.
 
 Default C<period> is C<1.0>, C<limit> is C<1>.
 
-See L<Sub::Throttler::Limit/"new"> for more details.
+See L<Sub::Throttler::algo/"new"> for more details.
 
 =item period
 

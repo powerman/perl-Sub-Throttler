@@ -57,8 +57,6 @@ sub release_unused {
 }
 
 # TODO удалить used() - в тестах лезть прямо в ->{used}
-# TODO стоит вынести new(), apply_to*() в Sub::Throttler::algo, плюс
-# добавить в него заглушки для acquire(), release*()
 sub used {
     my ($self, $key, $quantity) = @_;
     if (2 == @_) {

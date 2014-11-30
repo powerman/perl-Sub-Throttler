@@ -18,14 +18,15 @@ use EV;
 
 sub new {
     my $self = shift->SUPER::new(@_);
-    $self->{_t} = EV::periodic_ns 0, $self->period, 0, _weak_cb($self, \&_tick);
+    $self->{period} //= 1;
+    $self->{_t} = EV::periodic_ns 0, $self->{period}, 0, _weak_cb($self, \&_tick);
     return $self;
 }
 
 sub period {
     my $self = shift;
     croak q{period can't be modified after new()} if @_;
-    return $self->{period} // 1;
+    return $self->{period};
 }
 
 # TODO сделать $data=dump() и restore($data), только для Rate и Periodic,
@@ -37,11 +38,11 @@ sub period {
 # TODO keep current algo as Periodic::EV
 sub acquire {
     my $self = shift;
-    my $res = $self->SUPER::acquire(@_);
-    if (keys %{ $self->{acquired} }) {
+    if ($self->SUPER::acquire(@_)) {
         $self->{_t}->start;
+        return 1;
     }
-    return $res;
+    return;
 }
 
 sub release {
@@ -53,15 +54,19 @@ sub release {
 
 sub _tick {
     my $self = shift;
-    $self->{used} = {};
     for my $id (keys %{ $self->{acquired} }) {
         for my $key (keys %{ $self->{acquired}{$id} }) {
             $self->{acquired}{$id}{$key} = 0;
         }
     }
-    # TODO OPTIMIZATION не вызывать throttle_flush() если никакие ресурсы
-    # не освободились
-    throttle_flush();
+    # OPTIMIZATION вызывать throttle_flush() только если могли появиться
+    # свободные ресурсы (т.е. если какие-то ресурсы освободились)
+    if (keys %{ $self->{used} }) {
+        $self->{used} = {};
+        throttle_flush();
+    }
+    # Keep watcher inactive when no resources acquired to exit from event
+    # loop if user don't have own active watchers.
     if (!keys %{ $self->{acquired} }) {
         $self->{_t}->stop;
     }

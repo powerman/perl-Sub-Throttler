@@ -234,11 +234,13 @@ $throttle->used('key1', 5);
 is $Flush, 1;
 
 # - limit
-#   * при изменении limit() вызывается Sub::Throttler::throttle_flush
+#   * при увеличении limit() вызывается Sub::Throttler::throttle_flush
 
 $throttle = Sub::Throttler::Limit->new(limit => 5);
 $Flush = 0;
 $throttle->limit(3);
+is $Flush, 0;
+$throttle->limit(4);
 is $Flush, 1;
 
 # - apply_to

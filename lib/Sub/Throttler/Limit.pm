@@ -17,6 +17,12 @@ use Sub::Throttler qw( throttle_flush );
 use constant DEFAULT_KEY    => 'default';
 
 
+sub new {
+    my $self = shift->SUPER::new(@_);
+    $self->{limit} //= 1;
+    return $self;
+}
+
 sub acquire {
     my ($self, $id, $key, $quantity) = @_;
     croak sprintf '%s already acquired %s', $id, $key
@@ -24,7 +30,7 @@ sub acquire {
     croak 'quantity must be positive' if $quantity <= 0;
 
     my $used = $self->{used}{$key} || 0;
-    if ($used + $quantity > $self->limit) {
+    if ($used + $quantity > $self->{limit}) {
         return;
     }
     $self->{used}{$key} = $used + $quantity;
@@ -36,15 +42,15 @@ sub acquire {
 sub limit {
     my ($self, $limit) = @_;
     if (1 == @_) {
-        # FIXME перенести значение по умолчанию в new() и перестать
-        # использовать внутри модулей функцию если достаточно обратиться
-        # напрямую к полю
-        return $self->{limit} // 1;
+        return $self->{limit};
     }
+    # OPTIMIZATION вызывать throttle_flush() только если могли появиться
+    # свободные ресурсы (т.е. при увеличении limit)
+    my $is_increased = $self->{limit} < $limit;
     $self->{limit} = $limit;
-    # TODO OPTIMIZATION вызывать throttle_flush() нужно только если
-    # {limit} увеличился
-    throttle_flush();
+    if ($is_increased) {
+        throttle_flush();
+    }
     return $self;
 }
 

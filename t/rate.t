@@ -295,12 +295,8 @@ is $Flush, 0;
 $throttle->release_unused('id2');
 is $Flush, 1;
 
-#   * Sub::Throttler::throttle_flush() вызывается каждый period (не важно,
-#     освободились какие-то ресурсы, или нет)
-#     FIXME на самом деле во-первых throttle_flush() не будет вызываться
-#     если все ресурсы освобождены (т.к. таймер приостанавливается), а
-#     во-вторых его нет смысла вызывать если никакие ресурсы не
-#     освободились
+#   * Sub::Throttler::throttle_flush() вызывается каждый period в котором
+#     были захвачены ресурсы (а значит они были освобождены в конце period)
 
 $Flush = 0;
 $throttle = Sub::Throttler::Rate::EV->new(period => 0.5);
@@ -308,10 +304,31 @@ $throttle->acquire('id1', 'key1', 1);
 $t = EV::timer 0.5, 0, sub { EV::break };
 EV::run;
 is $Flush, 1,
-    'throttle_flush() called every period';
+    'resource was acquired: throttle_flush() called after period';
 $t = EV::timer 0.5, 0, sub { EV::break };
 EV::run;
-is $Flush, 2;
+is $Flush, 1,
+    'resource was not acquired: throttle_flush() not called after period';
+$throttle->acquire('id1', 'key2', 1);
+$t = EV::timer 0.5, 0, sub { EV::break };
+EV::run;
+is $Flush, 2,
+    'resource was acquired: throttle_flush() called after period';
+$throttle->acquire('id1', 'key3', 2);
+$t = EV::timer 0.5, 0, sub { EV::break };
+EV::run;
+is $Flush, 2,
+    'resource failed to acquire: throttle_flush() not called after period';
+
+#   * watcher deactivates when all resources released
+
+$t = EV::timer 0.5, 0, sub { EV::break };
+ok EV::run,
+    'watcher is active because resources was not released yet';
+$throttle->release('id1');
+$t = EV::timer 0.5, 0, sub { EV::break };
+ok !EV::run,
+    'watcher is inactive because there are no acquired resources';
 
 # - used
 #   * уменьшение текущего значения (напр. установка отрицательного
@@ -345,11 +362,13 @@ $throttle->used('key1', 5);
 is $Flush, 1;
 
 #   # - limit
-#   #   * при изменении limit() вызывается Sub::Throttler::throttle_flush
+#   #   * при увеличении limit() вызывается Sub::Throttler::throttle_flush
 
 $throttle = Sub::Throttler::Limit->new(limit => 5);
 $Flush = 0;
 $throttle->limit(3);
+is $Flush, 0;
+$throttle->limit(4);
 is $Flush, 1;
 
 # - apply_to

@@ -6,7 +6,7 @@ use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
 
-use Sub::Throttler::Rate::EV;
+use Sub::Throttler::Periodic::EV;
 
 use EV;
 
@@ -16,14 +16,14 @@ my ($throttle, $t);
 my $Flush = 0;
 { no warnings 'redefine';
   sub Sub::Throttler::Limit::throttle_flush { $Flush++ }
-  sub Sub::Throttler::Rate::EV::throttle_flush { $Flush++ }
+  sub Sub::Throttler::Periodic::throttle_flush { $Flush++ }
 }
 
 # - new
 #   * значение limit по умолчанию 1
 #   * значение period по умолчанию 1
 
-$throttle = Sub::Throttler::Rate::EV->new;
+$throttle = Sub::Throttler::Periodic::EV->new;
 ok $throttle->acquire('id1', 'key1', 1);
 ok !$throttle->acquire('id2', 'key1', 1);
 is $throttle->limit, 1,
@@ -37,19 +37,19 @@ is $throttle->period, 1,
 
 #   * при limit < 0 acquire не проходит
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => -2);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => -2);
 ok !$throttle->acquire('id1', 'key1', 1),
     'limit < 0';
 
 #   * при limit = 0 acquire не проходит
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 0);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 0);
 ok !$throttle->acquire('id1', 'key1', 1),
     'limit = 0';
 
 #   * при limit = n acquire даёт выделить до n (включительно) ресурса
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 10);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 10);
 $throttle->acquire('id1', 'key1', 3);
 $throttle->acquire('id2', 'key1', 3);
 $throttle->acquire('id3', 'key1', 3);
@@ -64,7 +64,7 @@ $t = EV::periodic 0, 0.5, 0, sub { EV::break };
 EV::run;
 $t = EV::timer 0.3, 0, sub { EV::break };
 EV::run;
-$throttle = Sub::Throttler::Rate::EV->new(period => 0.5);
+$throttle = Sub::Throttler::Periodic::EV->new(period => 0.5);
 $throttle->acquire('id1', 'key1', 1);
 ok !$throttle->acquire('id2', 'key1', 1),
     'resource was not released (time not multi-periodic)';
@@ -76,7 +76,7 @@ ok $throttle->acquire('id2', 'key1', 1),
 # - acquire
 #   * исключение при $quantity <= 0
 
-$throttle = Sub::Throttler::Rate::EV->new;
+$throttle = Sub::Throttler::Periodic::EV->new;
 throws_ok { $throttle->acquire('id1', 'key1', -1) } qr/quantity must be positive/,
     '$quantity < 0';
 throws_ok { $throttle->acquire('id1', 'key1', 0) } qr/quantity must be positive/,
@@ -84,7 +84,7 @@ throws_ok { $throttle->acquire('id1', 'key1', 0) } qr/quantity must be positive/
 
 #   * повторный запрос для тех же $id и $key кидает исключение
 
-$throttle = Sub::Throttler::Rate::EV->new;
+$throttle = Sub::Throttler::Periodic::EV->new;
 $throttle->acquire('id1', 'key1', 1);
 throws_ok { $throttle->acquire('id1', 'key1', 1) } qr/already acquired/,
     'same $id and $key';
@@ -94,7 +94,7 @@ throws_ok { $throttle->acquire('id1', 'key1', 1) } qr/already acquired/,
 
 $t = EV::periodic 0, 0.2, 0, sub { EV::break };
 EV::run;
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5, period => 0.2);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5, period => 0.2);
 ok $throttle->acquire('id1', 'key1', 4),
     'return true for $key';
 ok !$throttle->acquire('id2', 'key1', 2),
@@ -112,7 +112,7 @@ ok $throttle->acquire('id2', 'key1', 2);
 #     попытался выделить:
 #     - текущее значение меньше limit, выделяется ровно под limit
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->acquire('id1', 'key1', 3);
 is $throttle->used('key1'), 3,
     'used()';
@@ -122,7 +122,7 @@ is $throttle->used('key1'), 5;
 
 #     - текущее значение меньше limit, выделяется больше limit
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->acquire('id1', 'key1', 3);
 ok !$throttle->acquire('id2', 'key1', 3),
     'value < limit, acquiring above limit';
@@ -130,14 +130,14 @@ is $throttle->used('key1'), 3;
 
 #     - текущее значение равно limit, выделяется 1
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->acquire('id1', 'key1', 5);
 ok !$throttle->acquire('id2', 'key1', 1),
     'value = limit, acquire 1';
 
 #   * под разные $key ресурсы выделяются независимо
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 ok $throttle->acquire('id1', 'key1', 5);
 ok $throttle->acquire('id1', 'key2', 5),
     'different $key are independent';
@@ -145,7 +145,7 @@ ok $throttle->acquire('id1', 'key2', 5),
 #   * увеличиваем текущий limit()
 #     - проходят acquire, которые до этого не проходили
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->acquire('id1', 'key1', 4);
 ok !$throttle->acquire('id2', 'key1', 4);
 $throttle->limit(10);
@@ -155,7 +155,7 @@ ok $throttle->acquire('id2', 'key1', 4),
 #   * уменьшить текущий limit()
 #     - не проходят acquire, которые до этого бы прошли
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 10);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 10);
 $throttle->acquire('id1', 'key1', 4);
 $throttle->limit(5);
 ok !$throttle->acquire('id2', 'key1', 4),
@@ -164,7 +164,7 @@ ok !$throttle->acquire('id2', 'key1', 4),
 # - release, release_unused
 #   * кидает исключение если для $id нет выделенных ресурсов
 
-$throttle = Sub::Throttler::Rate::EV->new;
+$throttle = Sub::Throttler::Periodic::EV->new;
 throws_ok { $throttle->release('id1') } qr/not acquired/,
     'no acquired resourced for $id';
 throws_ok { $throttle->release_unused('id1') } qr/not acquired/,
@@ -176,7 +176,7 @@ throws_ok { $throttle->release_unused('id1') } qr/not acquired/,
 #     в тот же период времени, когда они были захвачены
 #     - под $id был выделен один $key, период тот же
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 2);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 2);
 $throttle->acquire('id1', 'key1', 1);
 $throttle->acquire('id2', 'key2', 2);
 ok !$throttle->acquire('id3', 'key1', 2);
@@ -193,7 +193,7 @@ ok !$throttle->acquire('id3', 'key2', 1);
 
 #     - под $id был выделен один $key, период другой
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 2, period => 0.1);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 2, period => 0.1);
 $throttle->acquire('id1', 'key1', 1);
 $throttle->acquire('id2', 'key2', 2);
 ok !$throttle->acquire('id3', 'key1', 2);
@@ -213,7 +213,7 @@ is $throttle->used('key2'), 0;
 
 #     - под $id было выделено несколько $key, период тот же
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->acquire('id1', 'key1', 1);
 $throttle->acquire('id1', 'key2', 2);
 $throttle->acquire('id1', 'key3', 3);
@@ -236,7 +236,7 @@ ok $throttle->acquire('id3', 'key5', 1);
 
 #     - под $id было выделено несколько $key, период другой
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5, period => 0.01);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5, period => 0.01);
 $throttle->acquire('id1', 'key1', 1);
 $throttle->acquire('id1', 'key2', 2);
 $throttle->acquire('id1', 'key3', 3);
@@ -272,7 +272,7 @@ is $throttle->used('key5'), 0;
 #   * уменьшить текущий limit()
 #     - после release текущее значение всё ещё >= limit, и acquire не проходит
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->acquire('id1', 'key1', 1);
 $throttle->acquire('id2', 'key2', 2);
 $throttle->acquire('id3', 'key1', 4);
@@ -287,7 +287,7 @@ ok !$throttle->acquire('id2', 'key2', 1);
 #   * только release_unused вызывает Sub::Throttler::throttle_flush()
 
 $Flush = 0;
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->acquire('id1', 'key1', 5);
 $throttle->acquire('id2', 'key2', 5);
 $throttle->release('id1');
@@ -299,7 +299,7 @@ is $Flush, 1;
 #     были захвачены ресурсы (а значит они были освобождены в конце period)
 
 $Flush = 0;
-$throttle = Sub::Throttler::Rate::EV->new(period => 0.5);
+$throttle = Sub::Throttler::Periodic::EV->new(period => 0.5);
 $throttle->acquire('id1', 'key1', 1);
 $t = EV::timer 0.5, 0, sub { EV::break };
 EV::run;
@@ -336,7 +336,7 @@ ok !EV::run,
 #     - для такого $key доступный limit фактически увеличивается на
 #       столько, на сколько уменьшили used
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->used('key1', -5);
 ok $throttle->acquire('id1', 'key1', 10);
 ok !$throttle->acquire('id1', 'key2', 10);
@@ -346,7 +346,7 @@ is $throttle->used('key1'), 5;
 #     - для такого $key доступный limit фактически уменьшается на столько,
 #       на сколько увеличили used
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->used('key1', 5);
 $throttle->used('key2', 4);
 ok !$throttle->acquire('id1', 'key1', 1);
@@ -356,7 +356,7 @@ is $throttle->used('key2'), 5;
 
 #   * при изменении used вызывается Sub::Throttler::throttle_flush
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $Flush = 0;
 $throttle->used('key1', 5);
 is $Flush, 1;
@@ -364,7 +364,7 @@ is $Flush, 1;
 # - limit
 #   * при увеличении limit() вызывается Sub::Throttler::throttle_flush
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
+$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $Flush = 0;
 $throttle->limit(3);
 is $Flush, 0;
@@ -382,7 +382,7 @@ $Flush = 0;
 
 $t = EV::periodic 0, 0.5, 0, sub { EV::break };
 EV::run;
-$throttle = Sub::Throttler::Rate::EV->new(period => 0.5);
+$throttle = Sub::Throttler::Periodic::EV->new(period => 0.5);
 is $throttle->period, 0.5,
     'period set to 0.5';
 $throttle->acquire('id1', 'key1', 1);
@@ -429,7 +429,7 @@ is $throttle->period(0.5), $throttle;
 #   * некорректные параметры:
 #     - не 2 параметра
 
-$throttle = Sub::Throttler::Rate::EV->new;
+$throttle = Sub::Throttler::Periodic::EV->new;
 throws_ok { $throttle->apply_to() } qr/require 2 params/;
 
 #     - второй не ссылка на функцию

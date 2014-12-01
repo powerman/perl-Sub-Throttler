@@ -1,4 +1,4 @@
-package Sub::Throttler::Rate::EV;
+package Sub::Throttler::Periodic;
 
 use warnings;
 use strict;
@@ -12,18 +12,13 @@ use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
 # REMINDER: update dependencies in Build.PL
 use parent qw( Sub::Throttler::Limit );
 use Sub::Throttler qw( throttle_flush );
-use Scalar::Util qw( weaken );
 use Time::HiRes qw( time );
-use EV;
 
 
 sub new {
     my $self = shift->SUPER::new(@_);
     $self->{period} //= 1;
     $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
-    weaken(my $this = $self);
-    $self->{_t} = EV::periodic 0, $self->{period}, 0, sub { $this && $this->tick() };
-    $self->{_t}->keepalive(0);
     return $self;
 }
 
@@ -34,7 +29,6 @@ sub period {
     }
     $self->{period} = $period;
     $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
-    $self->{_t}->set(0, $self->{period}, 0);
     return $self;
 }
 
@@ -43,33 +37,10 @@ sub period {
 # (т.е. без возможности их форсировано освободить), формат $data -
 # недокументированная perl-структура (сериализация - задача юзера)
 
-# TODO switch to sliding window algo
-# TODO keep current algo as Periodic::EV
-sub acquire {
-    my $self = shift;
-    if ($self->SUPER::acquire(@_)) {
-        $self->{_t}->keepalive(1);
-        return 1;
-    }
-    return;
-}
-
 sub release {
     my ($self, $id) = @_;
     croak sprintf '%s not acquired anything', $id if !$self->{acquired}{$id};
     delete $self->{acquired}{$id};
-    if (!keys %{ $self->{acquired} }) {
-        $self->{_t}->keepalive(0);
-    }
-    return $self;
-}
-
-sub release_unused {
-    my $self = shift;
-    $self->SUPER::release_unused(@_);
-    if (!keys %{ $self->{acquired} }) {
-        $self->{_t}->keepalive(0);
-    }
     return $self;
 }
 
@@ -107,15 +78,15 @@ __END__
 
 =head1 NAME
 
-Sub::Throttler::Rate::EV - throttle by rate (quantity per time)
+Sub::Throttler::Periodic - throttle by rate (quantity per time)
 
 
 =head1 SYNOPSIS
 
-    use Sub::Throttler::Rate::EV;
+    use Sub::Throttler::Periodic;
     
     # default limit=1, period=1
-    my $throttle = Sub::Throttler::Rate::EV->new(period => 0.1, limit => 42);
+    my $throttle = Sub::Throttler::Periodic->new(period => 0.1, limit => 42);
     
     my $limit = $throttle->limit;
     $throttle->limit(42);
@@ -152,8 +123,12 @@ This algorithm works like L<Sub::Throttler::Limit> with one difference:
 when current time is divisible by given period value all used resources
 will be made available for acquiring again.
 
-It uses EV::timer, but will avoid keeping your event loop running when it
-doesn't needed anymore (if there are no acquired resources).
+It doesn't use event loops, but to keep it going you have to manually call
+L</"tick"> periodically - either just often enough, like every 0.01 sec or
+about 1/10 of L</"period"> sec, or precisely when needed by delaying next
+call by L</"delay"> sec. If your application use L<EV> event loop you can
+use L<Sub::Throttler::Periodic::EV> instead of this module to have
+L</"tick"> called automatically.
 
 
 =head1 EXPORTS
@@ -163,15 +138,15 @@ Nothing.
 
 =head1 INTERFACE
 
-L<Sub::Throttler::Rate::EV> inherits all methods from L<Sub::Throttler::Limit>
+L<Sub::Throttler::Periodic> inherits all methods from L<Sub::Throttler::Limit>
 and implements the following ones.
 
 =over
 
 =item new
 
-    my $throttle = Sub::Throttler::Rate::EV->new;
-    my $throttle = Sub::Throttler::Rate::EV->new(period => 0.1, limit => 42);
+    my $throttle = Sub::Throttler::Periodic->new;
+    my $throttle = Sub::Throttler::Periodic->new(period => 0.1, limit => 42);
 
 Create and return new instance of this algorithm.
 

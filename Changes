@@ -1,6 +1,9 @@
 Revision history for Sub-Throttler
 
 0.2.0   
+	Replace Sub::Throttler::Rate::EV with Sub::Throttler::Periodic
+	and Sub::Throttler::Periodic::EV.
+	Add experimental tick()/delay() API.
 	period() can be modified.
 	Add base class Sub::Throttler::algo.
 	Removed :plugin export tag from Sub::Throttler.

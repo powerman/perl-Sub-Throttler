@@ -78,18 +78,18 @@ ok $throttle->acquire('id1', 'key1', 4),
 ok !$throttle->acquire('id2', 'key1', 2),
     'return false for $key';
 
-#   (использовать used() для контроля текущего значения)
+#   (использовать {used} для контроля текущего значения)
 #   * использовать разные значения $quantity так, чтобы последний acquire
 #     попытался выделить:
 #     - текущее значение меньше limit, выделяется ровно под limit
 
 $throttle = Sub::Throttler::Limit->new(limit => 5);
 $throttle->acquire('id1', 'key1', 3);
-is $throttle->used('key1'), 3,
-    'used()';
+is $throttle->{used}{key1}, 3,
+    'used';
 ok $throttle->acquire('id2', 'key1', 2),
     'value < limit, acquiring to limit';
-is $throttle->used('key1'), 5;
+is $throttle->{used}{key1}, 5;
 
 #     - текущее значение меньше limit, выделяется больше limit
 
@@ -97,7 +97,7 @@ $throttle = Sub::Throttler::Limit->new(limit => 5);
 $throttle->acquire('id1', 'key1', 3);
 ok !$throttle->acquire('id2', 'key1', 3),
     'value < limit, acquiring above limit';
-is $throttle->used('key1'), 3;
+is $throttle->{used}{key1}, 3;
 
 #     - текущее значение равно limit, выделяется 1
 
@@ -141,7 +141,7 @@ throws_ok { $throttle->release('id1') } qr/not acquired/,
 throws_ok { $throttle->release_unused('id1') } qr/not acquired/,
     'no acquired resources for $id';
 
-#   (использовать used() для контроля текущего значения)
+#   (использовать {used} для контроля текущего значения)
 #   * освобождают все ресурсы ($key+$quantity), выделенные для $id
 #     - под $id был выделен один $key
 
@@ -150,14 +150,14 @@ $throttle->acquire('id1', 'key1', 1);
 $throttle->acquire('id2', 'key2', 2);
 ok !$throttle->acquire('id3', 'key1', 2);
 ok !$throttle->acquire('id3', 'key2', 1);
-is $throttle->used('key1'), 1;
+is $throttle->{used}{key1}, 1;
 $throttle->release_unused('id1');
-is $throttle->used('key1'), 0;
+is $throttle->{used}{key1}, undef;
 ok $throttle->acquire('id3', 'key1', 2);
 ok !$throttle->acquire('id3', 'key2', 1);
-is $throttle->used('key2'), 2;
+is $throttle->{used}{key2}, 2;
 $throttle->release('id2');
-is $throttle->used('key2'), 0;
+is $throttle->{used}{key2}, undef;
 ok $throttle->acquire('id3', 'key2', 1);
 
 #     - под $id было выделено несколько $key
@@ -206,37 +206,6 @@ $throttle->release('id1');
 is $Flush, 1;
 $throttle->release_unused('id2');
 is $Flush, 2;
-
-# - used
-#   * уменьшение текущего значения (напр. установка отрицательного
-#     значения, если текущее было 0)
-#     - для такого $key доступный limit фактически увеличивается на
-#       столько, на сколько уменьшили used
-
-$throttle = Sub::Throttler::Limit->new(limit => 5);
-$throttle->used('key1', -5);
-ok $throttle->acquire('id1', 'key1', 10);
-ok !$throttle->acquire('id1', 'key2', 10);
-is $throttle->used('key1'), 5;
-
-#   * увеличение текущего значения
-#     - для такого $key доступный limit фактически уменьшается на столько,
-#       на сколько увеличили used
-
-$throttle = Sub::Throttler::Limit->new(limit => 5);
-$throttle->used('key1', 5);
-$throttle->used('key2', 4);
-ok !$throttle->acquire('id1', 'key1', 1);
-ok $throttle->acquire('id1', 'key2', 1);
-is $throttle->used('key1'), 5;
-is $throttle->used('key2'), 5;
-
-#   * при изменении used вызывается Sub::Throttler::throttle_flush
-
-$throttle = Sub::Throttler::Limit->new(limit => 5);
-$Flush = 0;
-$throttle->used('key1', 5);
-is $Flush, 1;
 
 # - limit
 #   * при увеличении limit() вызывается Sub::Throttler::throttle_flush

@@ -112,18 +112,18 @@ $t = EV::timer 0.1, 0, sub { EV::break };
 EV::run;
 ok $throttle->acquire('id2', 'key1', 2);
 
-#   (использовать used() для контроля текущего значения)
+#   (использовать {used} для контроля текущего значения)
 #   * использовать разные значения $quantity так, чтобы последний acquire
 #     попытался выделить:
 #     - текущее значение меньше limit, выделяется ровно под limit
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->acquire('id1', 'key1', 3);
-is $throttle->used('key1'), 3,
-    'used()';
+is $throttle->{used}{key1}, 3,
+    'used';
 ok $throttle->acquire('id2', 'key1', 2),
     'value < limit, acquiring to limit';
-is $throttle->used('key1'), 5;
+is $throttle->{used}{key1}, 5;
 
 #     - текущее значение меньше limit, выделяется больше limit
 
@@ -131,7 +131,7 @@ $throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
 $throttle->acquire('id1', 'key1', 3);
 ok !$throttle->acquire('id2', 'key1', 3),
     'value < limit, acquiring above limit';
-is $throttle->used('key1'), 3;
+is $throttle->{used}{key1}, 3;
 
 #     - текущее значение равно limit, выделяется 1
 
@@ -175,7 +175,7 @@ throws_ok { $throttle->release('id1') } qr/not acquired/,
 throws_ok { $throttle->release_unused('id1') } qr/not acquired/,
     'no acquired resourced for $id';
 
-#   (использовать used() для контроля текущего значения)
+#   (использовать {used} для контроля текущего значения)
 #   * release не освобождает ресурсы, release_unused освобождает
 #     все ресурсы ($key+$quantity), выделенные для $id, если вызывается
 #     в тот же период времени, когда они были захвачены
@@ -186,14 +186,14 @@ $throttle->acquire('id1', 'key1', 1);
 $throttle->acquire('id2', 'key2', 2);
 ok !$throttle->acquire('id3', 'key1', 2);
 ok !$throttle->acquire('id3', 'key2', 1);
-is $throttle->used('key1'), 1;
+is $throttle->{used}{key1}, 1;
 $throttle->release_unused('id1');
-is $throttle->used('key1'), 0;
+is $throttle->{used}{key1}, undef;
 ok $throttle->acquire('id3', 'key1', 2);
 ok !$throttle->acquire('id3', 'key2', 1);
-is $throttle->used('key2'), 2;
+is $throttle->{used}{key2}, 2;
 $throttle->release('id2');
-is $throttle->used('key2'), 2;
+is $throttle->{used}{key2}, 2;
 ok !$throttle->acquire('id3', 'key2', 1);
 
 #     - под $id был выделен один $key, период другой
@@ -203,18 +203,18 @@ $throttle->acquire('id1', 'key1', 1);
 $throttle->acquire('id2', 'key2', 2);
 ok !$throttle->acquire('id3', 'key1', 2);
 ok !$throttle->acquire('id3', 'key2', 1);
-is $throttle->used('key1'), 1;
-is $throttle->used('key2'), 2;
+is $throttle->{used}{key1}, 1;
+is $throttle->{used}{key2}, 2;
 $t = EV::timer 0.1, 0, sub { EV::break };
 EV::run;
-is $throttle->used('key1'), 0;
-is $throttle->used('key2'), 0;
+is $throttle->{used}{key1}, undef;
+is $throttle->{used}{key2}, undef;
 lives_ok  { $throttle->release_unused('id1') };
 throws_ok { $throttle->release_unused('id1') } qr/not acquired/;
 lives_ok  { $throttle->release('id2') };
 throws_ok { $throttle->release('id2') } qr/not acquired/;
-is $throttle->used('key1'), 0;
-is $throttle->used('key2'), 0;
+is $throttle->{used}{key1}, undef;
+is $throttle->{used}{key2}, undef;
 
 #     - под $id было выделено несколько $key, период тот же
 
@@ -252,27 +252,27 @@ ok !$throttle->acquire('id3', 'key2', 4);
 ok !$throttle->acquire('id3', 'key3', 3);
 ok !$throttle->acquire('id3', 'key4', 2);
 ok !$throttle->acquire('id3', 'key5', 1);
-is $throttle->used('key1'), 1;
-is $throttle->used('key2'), 2;
-is $throttle->used('key3'), 3;
-is $throttle->used('key4'), 4;
-is $throttle->used('key5'), 5;
+is $throttle->{used}{key1}, 1;
+is $throttle->{used}{key2}, 2;
+is $throttle->{used}{key3}, 3;
+is $throttle->{used}{key4}, 4;
+is $throttle->{used}{key5}, 5;
 $t = EV::timer 0.01, 0, sub { EV::break };
 EV::run;
-is $throttle->used('key1'), 0;
-is $throttle->used('key2'), 0;
-is $throttle->used('key3'), 0;
-is $throttle->used('key4'), 0;
-is $throttle->used('key5'), 0;
+is $throttle->{used}{key1}, undef;
+is $throttle->{used}{key2}, undef;
+is $throttle->{used}{key3}, undef;
+is $throttle->{used}{key4}, undef;
+is $throttle->{used}{key5}, undef;
 lives_ok  { $throttle->release('id1') };
 throws_ok { $throttle->release('id1') } qr/not acquired/;
 lives_ok  { $throttle->release_unused('id2') };
 throws_ok { $throttle->release_unused('id2') } qr/not acquired/;
-is $throttle->used('key1'), 0;
-is $throttle->used('key2'), 0;
-is $throttle->used('key3'), 0;
-is $throttle->used('key4'), 0;
-is $throttle->used('key5'), 0;
+is $throttle->{used}{key1}, undef;
+is $throttle->{used}{key2}, undef;
+is $throttle->{used}{key3}, undef;
+is $throttle->{used}{key4}, undef;
+is $throttle->{used}{key5}, undef;
 
 #   * уменьшить текущий limit()
 #     - после release текущее значение всё ещё >= limit, и acquire не проходит
@@ -334,37 +334,6 @@ $throttle->release('id1');
 $t = EV::timer 0.5, 0, sub { EV::break };
 ok !EV::run,
     'watcher is inactive because there are no acquired resources';
-
-# - used
-#   * уменьшение текущего значения (напр. установка отрицательного
-#     значения, если текущее было 0)
-#     - для такого $key доступный limit фактически увеличивается на
-#       столько, на сколько уменьшили used
-
-$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-$throttle->used('key1', -5);
-ok $throttle->acquire('id1', 'key1', 10);
-ok !$throttle->acquire('id1', 'key2', 10);
-is $throttle->used('key1'), 5;
-
-#   * увеличение текущего значения
-#     - для такого $key доступный limit фактически уменьшается на столько,
-#       на сколько увеличили used
-
-$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-$throttle->used('key1', 5);
-$throttle->used('key2', 4);
-ok !$throttle->acquire('id1', 'key1', 1);
-ok $throttle->acquire('id1', 'key2', 1);
-is $throttle->used('key1'), 5;
-is $throttle->used('key2'), 5;
-
-#   * при изменении used вызывается Sub::Throttler::throttle_flush
-
-$throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-$Flush = 0;
-$throttle->used('key1', 5);
-is $Flush, 1;
 
 # - limit
 #   * при увеличении limit() вызывается Sub::Throttler::throttle_flush

@@ -114,8 +114,6 @@ Sub::Throttler::Periodic - throttle by rate (quantity per time)
         $throttle->release($id);
         $throttle->release_unused($id);
     }
-    my $quantity = $throttle->used($key);
-    $throttle->used($key, $quantity);
 
 
 =head1 DESCRIPTION

@@ -70,17 +70,6 @@ sub tick_delay {
     return 0;
 }
 
-# TODO удалить used() - в тестах лезть прямо в ->{used}
-sub used {
-    my ($self, $key, $quantity) = @_;
-    if (2 == @_) {
-        return $self->{used}{$key} || 0;
-    }
-    $self->{used}{$key} = 0+$quantity;
-    throttle_flush();
-    return $self;
-}
-
 sub _release {
     my ($self, $id) = @_;
     croak sprintf '%s not acquired anything', $id if !$self->{acquired}{$id};
@@ -229,26 +218,6 @@ See L<Sub::Throttler::algo/"new"> for more details.
     $throttle = $throttle->limit(42);
 
 Get or modify current C<limit>.
-
-=back
-
-=head2 Manual resource management
-
-=over
-
-=item used
-
-    my $quantity = $throttle->used($key);
-    $throttle->used($key, $quantity);
-
-You can use it to manually save and restore current limits between
-different executions of your app, when it makes sense. Consider restoring
-limits using L</"acquire">, otherwise it will be harder to release these
-resources later.
-
-Changing current quantity is probably very bad idea because if you
-decrease current value this may result in negative value after all
-currently acquired resource will be released.
 
 =back
 

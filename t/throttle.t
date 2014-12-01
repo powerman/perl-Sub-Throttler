@@ -323,24 +323,28 @@ $throttle = Sub::Throttler::Limit->new
 
 @Result = ();
 
-$throttle->used('key1', 1);
-$throttle->used('key2', 1);
+$throttle->{used}{key1} = 1;
+$throttle->{used}{key2} = 1;
+throttle_flush();
 $obj->method(10);
 is_deeply \@Result, [],
     'no key1 & no key2';
 
-$throttle->used('key1', 0);
-$throttle->used('key2', 1);
+$throttle->{used}{key1} = 0;
+$throttle->{used}{key2} = 1;
+throttle_flush();
 is_deeply \@Result, [],
     'key1 & no key2';
 
-$throttle->used('key1', 1);
-$throttle->used('key2', 0);
+$throttle->{used}{key1} = 1;
+$throttle->{used}{key2} = 0;
+throttle_flush();
 is_deeply \@Result, [],
     'no key1 & key2';
 
-$throttle->used('key1', 0);
-$throttle->used('key2', 0);
+$throttle->{used}{key1} = 0;
+$throttle->{used}{key2} = 0;
+throttle_flush();
 is_deeply \@Result, [10],
     'key1 & key2';
 
@@ -441,11 +445,13 @@ throttle_add($throttle, sub {
 });
 
 @Result = ();
-$throttle->used('', 1);
+$throttle->{used}{''} = 1;
+throttle_flush();
 func(10);
 is_deeply \@Result, [],
     'return {""=>1}';
-$throttle->used('', 0);
+$throttle->{used}{''} = 0;
+throttle_flush();
 is_deeply \@Result, [10];
 
 #     - $key => $quantity
@@ -457,7 +463,8 @@ throttle_add($throttle, sub {
 });
 
 @Result = ();
-$throttle->used('key', 1);
+$throttle->{used}{key} = 1;
+throttle_flush();
 func(10);
 is_deeply \@Result, [],
     'return {key=>2}';
@@ -473,19 +480,23 @@ throttle_add($throttle, sub {
 });
 
 @Result = ();
-$throttle->used('key1', 5);
+$throttle->{used}{key1} = 5;
+throttle_flush();
 func(10);
 is_deeply \@Result, [],
     'no key1 of 3 keys';
-$throttle->used('key2', 4);
-$throttle->used('key1', 4);
+$throttle->{used}{key2} = 4;
+$throttle->{used}{key1} = 4;
+throttle_flush();
 is_deeply \@Result, [],
     'no key2 of 3 keys';
-$throttle->used('key3', 3);
-$throttle->used('key2', 3);
+$throttle->{used}{key3} = 3;
+$throttle->{used}{key2} = 3;
+throttle_flush();
 is_deeply \@Result, [],
     'no key3 of 3 keys';
-$throttle->used('key3', 2);
+$throttle->{used}{key3} = 2;
+throttle_flush();
 is_deeply \@Result, [10],
     '3 keys of 3 keys';
 
@@ -852,7 +863,8 @@ throttle_add($throttle, sub {
     return { key1 => 1, key2 => 1 };
 });
 
-$throttle->used('key2', 1);
+$throttle->{used}{key2} = 1;
+throttle_flush();
 @Result = ();
 func(10);
 @Wait = @Result == 1 ? ['flush'] : ['flush','flush']; # depends on resource acquiring order
@@ -863,7 +875,8 @@ is_deeply \@Result, @Wait;
 $t = EV::timer 0.01, 0, sub { EV::break };
 EV::run;
 is_deeply \@Result, @Wait;
-$throttle->used('key2', 0);
+$throttle->{used}{key2} = 0;
+throttle_flush();
 
 #   * если в процессе работы throttle_flush в очередь (любую) добавляются новые
 #     задачи, то они должны добавиться в конец очередей

@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 0.2.0   
+	Removed used() API.
 	Replace Sub::Throttler::Rate::EV with Sub::Throttler::Periodic
 	and Sub::Throttler::Periodic::EV.
 	Add experimental tick()/delay() API.

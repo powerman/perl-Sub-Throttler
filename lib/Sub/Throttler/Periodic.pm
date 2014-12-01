@@ -16,8 +16,12 @@ use Time::HiRes qw( time );
 
 
 sub new {
-    my $self = shift->SUPER::new(@_);
-    $self->{period} //= 1;
+    my ($class, %opt) = @_;
+    my $self = bless {
+        limit   => delete $opt{limit}   // 1,
+        period  => delete $opt{period}  // 1,
+        }, ref $class || $class;
+    croak 'bad param: '.(keys %opt)[0] if keys %opt;
     $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
     return $self;
 }
@@ -138,7 +142,7 @@ Nothing.
 
 =head1 INTERFACE
 
-L<Sub::Throttler::Periodic> inherits all methods from L<Sub::Throttler::Limit>
+L<Sub::Throttler::Periodic> inherits all methods from L<Sub::Throttler::algo>
 and implements the following ones.
 
 =over
@@ -160,6 +164,13 @@ See L<Sub::Throttler::algo/"new"> for more details.
     $throttle  = $throttle->period($period);
 
 Get or modify current C<period>.
+
+=item limit
+
+    my $limit = $throttle->limit;
+    $throttle = $throttle->limit(42);
+
+Get or modify current C<limit>.
 
 =back
 

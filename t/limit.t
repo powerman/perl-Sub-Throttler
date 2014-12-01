@@ -48,6 +48,11 @@ ok $throttle->acquire('id4', 'key1', 1),
 ok !$throttle->acquire('id5', 'key1', 1),
     'attempt to acquire more, then n';
 
+#   * некорректные параметры
+
+throws_ok { Sub::Throttler::Limit->new(period => 1) } qr/bad param/;
+throws_ok { Sub::Throttler::Limit->new(period => 1, limit => 1) } qr/bad param/;
+
 # - acquire
 #   * исключение при $quantity <= 0
 

@@ -57,6 +57,11 @@ ok $throttle->acquire('id4', 'key1', 1),
 ok !$throttle->acquire('id5', 'key1', 1),
     'attempt to acquire more than n';
 
+#   * некорректные параметры
+
+throws_ok { Sub::Throttler::Periodic->new(duration => 1) } qr/bad param/;
+throws_ok { Sub::Throttler::Periodic->new(duration => 1, limit => 1) } qr/bad param/;
+
 #   * ресурсы освобождаются не через period, а когда текущее время кратно period
 
 sleep int(time/0.5)*0.5+0.5-time();

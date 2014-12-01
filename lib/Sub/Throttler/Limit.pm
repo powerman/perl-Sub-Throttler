@@ -14,12 +14,12 @@ use parent qw( Sub::Throttler::algo );
 use Sub::Throttler qw( throttle_flush );
 
 
-use constant DEFAULT_KEY    => 'default';
-
-
 sub new {
-    my $self = shift->SUPER::new(@_);
-    $self->{limit} //= 1;
+    my ($class, %opt) = @_;
+    my $self = bless {
+        limit   => delete $opt{limit}   // 1,
+        }, ref $class || $class;
+    croak 'bad param: '.(keys %opt)[0] if keys %opt;
     return $self;
 }
 

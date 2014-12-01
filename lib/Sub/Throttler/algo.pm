@@ -16,12 +16,10 @@ use Sub::Throttler qw( throttle_add );
 
 use constant DEFAULT_KEY    => 'default';
 
-
-sub new {
-    my $class = shift;
-    my $self = bless {@_}, ref $class || $class;
-    return $self;
-}
+sub new { croak 'Method "new" not implemented in subclass' }
+sub acquire { croak 'Method "acquire" not implemented in subclass' }
+sub release { croak 'Method "release" not implemented in subclass' }
+sub release_unused { croak 'Method "release_unused" not implemented in subclass' }
 
 sub apply_to {
     goto &throttle_add;
@@ -96,12 +94,12 @@ Sub::Throttler::algo - base class for throttling algorithms
 
     package Sub::Throttler::YourCustomAlgo;
     use parent qw( Sub::Throttler::algo );
+    sub new { ... }
     sub acquire { ... }
     sub release { ... }
     sub release_unused { ... }
 
     package main;
-    my $throttle = Sub::Throttler::YourCustomAlgo->new( ... );
     $throttle->apply_to_methods(Mojo::UserAgent => qw( get post ));
 
 
@@ -123,18 +121,17 @@ Nothing.
 
 =item new
 
-    my $throttle = Sub::Throttler::YourCustomAlgo->new;
-    my $throttle = Sub::Throttler::YourCustomAlgo->new(%options);
+    my $throttle = Sub::Throttler::YourCustomAlgo->new(...);
 
 Create and return new instance of this algorithm.
 
-It won't affect throttling of your functions/methods until you'll call
-L</"apply_to_functions"> or L</"apply_to_methods"> or L</"apply_to">.
+Supported params depends on concrete algorithm, for example see
+L<Sub::Throttler::Limit/"new">, L<Sub::Throttler::Periodic/"new">.
 
-You don't have to keep returned object alive after you've configured
-throttling by calling these apply_to methods (you may need to keep it only
-if you'll want to add more throttling later or to remove all throttling
-configured on this instance using L<Sub::Throttler/"throttle_del">.
+It won't affect throttling of your functions/methods until you'll call
+L</"apply_to_functions"> or L</"apply_to_methods"> or L</"apply_to"> or
+L<Sub::Throttler/"throttle_add">. You don't have to keep returned object
+after you've configured throttling by calling these methods.
 
 =back
 
@@ -235,7 +232,8 @@ or C<$quantity> is non-positive.
     $throttle = $throttle->release($id);
 
 Release all resources previously acquired by one or more calls to
-L</"acquire"> using this C<$id>.
+L</"acquire"> using this C<$id> (this may or may not make them immediately
+available for acquiring again depending on plugin/algorithms).
 
 =item release_unused
 

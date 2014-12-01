@@ -13,13 +13,16 @@ use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
 use parent qw( Sub::Throttler::Limit );
 use Sub::Throttler qw( throttle_flush );
 use Scalar::Util qw( weaken );
+use Time::HiRes qw( time );
 use EV;
 
 
 sub new {
     my $self = shift->SUPER::new(@_);
     $self->{period} //= 1;
-    $self->{_t} = EV::periodic 0, $self->{period}, 0, _weak_cb($self, \&_tick);
+    $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
+    weaken(my $this = $self);
+    $self->{_t} = EV::periodic 0, $self->{period}, 0, sub { $this && $this->tick() };
     $self->{_t}->keepalive(0);
     return $self;
 }
@@ -30,6 +33,7 @@ sub period {
         return $self->{period};
     }
     $self->{period} = $period;
+    $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
     $self->{_t}->set(0, $self->{period}, 0);
     return $self;
 }
@@ -69,8 +73,12 @@ sub release_unused {
     return $self;
 }
 
-sub _tick {
+sub tick {
     my $self = shift;
+
+    return if time < $self->{_at};
+    $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
+
     for my $id (keys %{ $self->{acquired} }) {
         for my $key (keys %{ $self->{acquired}{$id} }) {
             $self->{acquired}{$id}{$key} = 0;
@@ -85,10 +93,10 @@ sub _tick {
     return;
 }
 
-sub _weak_cb {
-    my ($this, $method, @p) = @_;
-    weaken $this;
-    return sub { $this && $this->$method(@p, @_) };
+sub delay {
+    my $self = shift;
+    my $delay = $self->{_at} - time;
+    return $delay < 0 ? 0 : $delay;
 }
 
 

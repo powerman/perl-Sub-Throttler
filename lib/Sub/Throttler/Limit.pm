@@ -73,6 +73,14 @@ sub used {
     return $self;
 }
 
+sub tick {
+    croak 'tick() and throttling sync sub is not supported by this algorithm';
+}
+
+sub delay {
+    return 0;
+}
+
 sub _release {
     my ($self, $id) = @_;
     croak sprintf '%s not acquired anything', $id if !$self->{acquired}{$id};

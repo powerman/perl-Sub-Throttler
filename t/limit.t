@@ -50,6 +50,7 @@ ok !$throttle->acquire('id5', 'key1', 1),
 
 #   * некорректные параметры
 
+throws_ok { Sub::Throttler::Limit->new('limit') } qr/hash/;
 throws_ok { Sub::Throttler::Limit->new(period => 1) } qr/bad param/;
 throws_ok { Sub::Throttler::Limit->new(period => 1, limit => 1) } qr/bad param/;
 

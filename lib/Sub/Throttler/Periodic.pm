@@ -1,6 +1,6 @@
 package Sub::Throttler::Periodic;
 
-use warnings;
+use warnings FATAL => qw( misc );
 use strict;
 use utf8;
 use feature ':5.10';

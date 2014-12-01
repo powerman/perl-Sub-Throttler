@@ -1,6 +1,6 @@
 package Sub::Throttler::Limit;
 
-use warnings FATAL => qw( misc );
+use warnings;
 use strict;
 use utf8;
 use feature ':5.10';
@@ -15,6 +15,7 @@ use Sub::Throttler qw( throttle_flush );
 
 
 sub new {
+    use warnings FATAL => qw( misc );
     my ($class, %opt) = @_;
     my $self = bless {
         limit   => delete $opt{limit}   // 1,

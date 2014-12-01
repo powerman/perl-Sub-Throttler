@@ -1,6 +1,6 @@
 package Sub::Throttler::Periodic;
 
-use warnings FATAL => qw( misc );
+use warnings;
 use strict;
 use utf8;
 use feature ':5.10';
@@ -16,6 +16,7 @@ use Time::HiRes qw( time );
 
 
 sub new {
+    use warnings FATAL => qw( misc );
     my ($class, %opt) = @_;
     my $self = bless {
         limit   => delete $opt{limit}   // 1,

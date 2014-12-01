@@ -243,6 +243,10 @@ is $Flush, 0;
 $throttle->limit(4);
 is $Flush, 1;
 
+#   * chaining
+
+is $throttle->limit(4), $throttle;
+
 # - apply_to
 #   * некорректные параметры:
 #     - не 2 параметра

@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 0.2.0   
+	period() can be modified.
 	Add base class Sub::Throttler::algo.
 	Removed :plugin export tag from Sub::Throttler.
 	Add support for class methods in done_cb().

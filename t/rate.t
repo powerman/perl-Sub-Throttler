@@ -356,20 +356,74 @@ is $throttle->used('key2'), 5;
 
 #   * при изменении used вызывается Sub::Throttler::throttle_flush
 
-$throttle = Sub::Throttler::Limit->new(limit => 5);
+$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
 $Flush = 0;
 $throttle->used('key1', 5);
 is $Flush, 1;
 
-#   # - limit
-#   #   * при увеличении limit() вызывается Sub::Throttler::throttle_flush
+# - limit
+#   * при увеличении limit() вызывается Sub::Throttler::throttle_flush
 
-$throttle = Sub::Throttler::Limit->new(limit => 5);
+$throttle = Sub::Throttler::Rate::EV->new(limit => 5);
 $Flush = 0;
 $throttle->limit(3);
 is $Flush, 0;
 $throttle->limit(4);
 is $Flush, 1;
+
+#   * chaining
+
+is $throttle->limit(4), $throttle;
+
+# - period
+#   * изменение period срабатывает сразу
+
+$Flush = 0;
+
+$t = EV::periodic 0, 0.5, 0, sub { EV::break };
+EV::run;
+$throttle = Sub::Throttler::Rate::EV->new(period => 0.5);
+is $throttle->period, 0.5,
+    'period set to 0.5';
+$throttle->acquire('id1', 'key1', 1);
+$t = EV::timer 0.3, 0, sub { EV::break };
+EV::run;
+is $Flush, 0,
+    'period > 0.3';
+$t = EV::timer 0.3, 0, sub { EV::break };
+EV::run;
+is $Flush, 1,
+    'period < 0.6';
+
+$t = EV::periodic 0, 0.1, 0, sub { EV::break };
+EV::run;
+$throttle->acquire('id1', 'key2', 1);
+$throttle->period(0.1);
+is $throttle->period, 0.1,
+    'set period to 0.1';
+$t = EV::timer 0.3, 0, sub { EV::break };
+EV::run;
+is $Flush, 2,
+    'period < 0.3';
+
+$t = EV::periodic 0, 0.5, 0, sub { EV::break };
+EV::run;
+$throttle->acquire('id1', 'key3', 1);
+$throttle->period(0.5);
+is $throttle->period, 0.5,
+    'set period to 0.5';
+$t = EV::timer 0.3, 0, sub { EV::break };
+EV::run;
+is $Flush, 2,
+    'period > 0.3';
+$t = EV::timer 0.3, 0, sub { EV::break };
+EV::run;
+is $Flush, 3,
+    'period < 0.6';
+
+#   * chaining
+
+is $throttle->period(0.5), $throttle;
 
 # - apply_to
 #   * некорректные параметры:

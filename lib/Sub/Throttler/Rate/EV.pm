@@ -25,9 +25,13 @@ sub new {
 }
 
 sub period {
-    my $self = shift;
-    croak q{period can't be modified after new()} if @_;
-    return $self->{period};
+    my ($self, $period) = @_;
+    if (1 == @_) {
+        return $self->{period};
+    }
+    $self->{period} = $period;
+    $self->{_t}->set(0, $self->{period}, 0);
+    return $self;
 }
 
 # TODO сделать $data=dump() и restore($data), только для Rate и Periodic,
@@ -108,6 +112,7 @@ Sub::Throttler::Rate::EV - throttle by rate (quantity per time)
     my $limit = $throttle->limit;
     $throttle->limit(42);
     my $period = $throttle->period;
+    $throttle->period(0.1);
     
     # --- Activate throttle for selected subrouties
     $throttle->apply_to_functions('Some::func', 'Other::func2', …);
@@ -169,8 +174,9 @@ See L<Sub::Throttler::algo/"new"> for more details.
 =item period
 
     my $period = $throttle->period;
+    $throttle  = $throttle->period($period);
 
-Get current C<period>.
+Get or modify current C<period>.
 
 =back
 

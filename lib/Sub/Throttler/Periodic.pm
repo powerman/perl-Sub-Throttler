@@ -21,10 +21,12 @@ sub new {
     my $self = bless {
         limit   => delete $opt{limit}   // 1,
         period  => delete $opt{period}  // 1,
+        acquired=> {},  # { $id => { $key => $quantity, … }, … }
+        used    => {},  # { $key => $quantity, … }
+        _at     => 0,   # next time when free all resources
         }, ref $class || $class;
     croak 'bad param: '.(keys %opt)[0] if keys %opt;
-    $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
-    return $self;
+    return $self->_reschedule;
 }
 
 sub period {
@@ -33,8 +35,7 @@ sub period {
         return $self->{period};
     }
     $self->{period} = $period;
-    $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
-    return $self;
+    return $self->_reschedule;
 }
 
 # TODO сделать $data=dump() и restore($data), только для Rate и Periodic,
@@ -53,7 +54,7 @@ sub tick {
     my $self = shift;
 
     return if time < $self->{_at};
-    $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
+    $self->_reschedule;
 
     for my $id (keys %{ $self->{acquired} }) {
         for my $key (keys %{ $self->{acquired}{$id} }) {
@@ -73,6 +74,12 @@ sub tick_delay {
     my $self = shift;
     my $delay = $self->{_at} - time;
     return $delay < 0 ? 0 : $delay;
+}
+
+sub _reschedule {
+    my $self = shift;
+    $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
+    return $self;
 }
 
 

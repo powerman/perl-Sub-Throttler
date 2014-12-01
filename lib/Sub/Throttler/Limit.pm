@@ -19,6 +19,8 @@ sub new {
     my ($class, %opt) = @_;
     my $self = bless {
         limit   => delete $opt{limit}   // 1,
+        acquired=> {},  # { $id => { $key => $quantity, … }, … }
+        used    => {},  # { $key => $quantity, … }
         }, ref $class || $class;
     croak 'bad param: '.(keys %opt)[0] if keys %opt;
     return $self;

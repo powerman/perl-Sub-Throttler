@@ -62,6 +62,14 @@ sub release_unused {
     return _release(@_);
 }
 
+sub tick {
+    croak 'tick() and throttling sync sub is not supported by ' . ref shift;
+}
+
+sub tick_delay {
+    return 0;
+}
+
 # TODO удалить used() - в тестах лезть прямо в ->{used}
 sub used {
     my ($self, $key, $quantity) = @_;
@@ -71,14 +79,6 @@ sub used {
     $self->{used}{$key} = 0+$quantity;
     throttle_flush();
     return $self;
-}
-
-sub tick {
-    croak 'tick() and throttling sync sub is not supported by this algorithm';
-}
-
-sub delay {
-    return 0;
 }
 
 sub _release {

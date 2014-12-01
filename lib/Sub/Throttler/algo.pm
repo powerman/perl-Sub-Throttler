@@ -16,10 +16,6 @@ use Sub::Throttler qw( throttle_add );
 
 use constant DEFAULT_KEY    => 'default';
 
-sub new { croak 'Method "new" not implemented in subclass' }
-sub acquire { croak 'Method "acquire" not implemented in subclass' }
-sub release { croak 'Method "release" not implemented in subclass' }
-sub release_unused { croak 'Method "release_unused" not implemented in subclass' }
 
 sub apply_to {
     goto &throttle_add;
@@ -98,6 +94,8 @@ Sub::Throttler::algo - base class for throttling algorithms
     sub acquire { ... }
     sub release { ... }
     sub release_unused { ... }
+    sub tick { ... }
+    sub tick_delay { ... }
 
     package main;
     $throttle->apply_to_methods(Mojo::UserAgent => qw( get post ));

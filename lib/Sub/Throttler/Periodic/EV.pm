@@ -23,15 +23,6 @@ sub new {
     return $self;
 }
 
-sub period {
-    if (1 == @_) {
-        return shift->SUPER::period();
-    }
-    my $self = shift->SUPER::period(@_);
-    $self->{_t}->set(0, $self->{period}, 0);
-    return $self;
-}
-
 sub acquire {
     my $self = shift;
     if ($self->SUPER::acquire(@_)) {
@@ -39,6 +30,15 @@ sub acquire {
         return 1;
     }
     return;
+}
+
+sub period {
+    if (1 == @_) {
+        return shift->SUPER::period();
+    }
+    my $self = shift->SUPER::period(@_);
+    $self->{_t}->set(0, $self->{period}, 0);
+    return $self;
 }
 
 sub release {

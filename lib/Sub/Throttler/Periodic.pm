@@ -68,7 +68,7 @@ sub tick {
     return;
 }
 
-sub delay {
+sub tick_delay {
     my $self = shift;
     my $delay = $self->{_at} - time;
     return $delay < 0 ? 0 : $delay;
@@ -128,10 +128,10 @@ when current time is divisible by given period value all used resources
 will be made available for acquiring again.
 
 It doesn't use event loops, but to keep it going you have to manually call
-L</"tick"> periodically - either just often enough, like every 0.01 sec or
-about 1/10 of L</"period"> sec, or precisely when needed by delaying next
-call by L</"delay"> sec. If your application use L<EV> event loop you can
-use L<Sub::Throttler::Periodic::EV> instead of this module to have
+L</"tick"> periodically - either just often enough (like every 0.01 sec or
+about 1/10 of L</"period"> sec) or precisely when needed by delaying next
+call by L</"tick_delay"> sec. If your application use L<EV> event loop you
+can use L<Sub::Throttler::Periodic::EV> instead of this module to have
 L</"tick"> called automatically.
 
 

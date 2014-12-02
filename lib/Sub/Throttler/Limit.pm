@@ -18,10 +18,11 @@ sub new {
     use warnings FATAL => qw( misc );
     my ($class, %opt) = @_;
     my $self = bless {
-        limit   => delete $opt{limit}   // 1,
+        limit   => delete $opt{limit} // 1,
         acquired=> {},  # { $id => { $key => $quantity, … }, … }
         used    => {},  # { $key => $quantity, … }
         }, ref $class || $class;
+    croak 'limit must be an unsigned integer' if $self->{limit} !~ /\A\d+\z/ms;
     croak 'bad param: '.(keys %opt)[0] if keys %opt;
     return $self;
 }
@@ -47,11 +48,12 @@ sub limit {
     if (1 == @_) {
         return $self->{limit};
     }
+    croak 'limit must be an unsigned integer' if $limit !~ /\A\d+\z/ms;
     # OPTIMIZATION вызывать throttle_flush() только если могли появиться
     # свободные ресурсы (т.е. при увеличении limit)
-    my $is_increased = $self->{limit} < $limit;
+    my $resources_increases = $self->{limit} < $limit;
     $self->{limit} = $limit;
-    if ($is_increased) {
+    if ($resources_increases) {
         throttle_flush();
     }
     return $self;

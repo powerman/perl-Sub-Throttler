@@ -25,12 +25,6 @@ ok !$throttle->acquire('id2', 'key1', 1);
 is $throttle->limit, 1,
     'limit = 1';
 
-#   * при limit < 0 acquire не проходит
-
-$throttle = Sub::Throttler::Limit->new(limit => -2);
-ok !$throttle->acquire('id1', 'key1', 1),
-    'limit < 0';
-
 #   * при limit = 0 acquire не проходит
 
 $throttle = Sub::Throttler::Limit->new(limit => 0);
@@ -50,8 +44,10 @@ ok !$throttle->acquire('id5', 'key1', 1),
 
 #   * некорректные параметры
 
-throws_ok { Sub::Throttler::Limit->new('limit') } qr/hash/;
-throws_ok { Sub::Throttler::Limit->new(period => 1) } qr/bad param/;
+throws_ok { Sub::Throttler::Limit->new('limit')         } qr/hash/;
+throws_ok { Sub::Throttler::Limit->new(limit => -2)     } qr/unsigned integer/;
+throws_ok { Sub::Throttler::Limit->new(limit => q{})    } qr/unsigned integer/;
+throws_ok { Sub::Throttler::Limit->new(period => 1)     } qr/bad param/;
 throws_ok { Sub::Throttler::Limit->new(period => 1, limit => 1) } qr/bad param/;
 
 # - acquire

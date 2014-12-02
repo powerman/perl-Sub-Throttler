@@ -19,12 +19,14 @@ sub new {
     use warnings FATAL => qw( misc );
     my ($class, %opt) = @_;
     my $self = bless {
-        limit   => delete $opt{limit}   // 1,
-        period  => delete $opt{period}  // 1,
+        limit   => delete $opt{limit} // 1,
+        period  => delete $opt{period} // 1,
         acquired=> {},  # { $id => { $key => $quantity, … }, … }
         used    => {},  # { $key => $quantity, … }
         _at     => 0,   # next time when free all resources
         }, ref $class || $class;
+    croak 'limit must be an unsigned integer' if $self->{limit} !~ /\A\d+\z/ms;
+    croak 'period must be a positive number' if $self->{period} <= 0;
     croak 'bad param: '.(keys %opt)[0] if keys %opt;
     return $self->_reschedule;
 }
@@ -34,6 +36,7 @@ sub period {
     if (1 == @_) {
         return $self->{period};
     }
+    croak 'period must be a positive number' if $period <= 0;
     $self->{period} = $period;
     return $self->_reschedule;
 }

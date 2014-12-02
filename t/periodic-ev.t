@@ -35,12 +35,6 @@ ok $throttle->acquire('id2', 'key1', 1);
 is $throttle->period, 1,
     'period = 1';
 
-#   * при limit < 0 acquire не проходит
-
-$throttle = Sub::Throttler::Periodic::EV->new(limit => -2);
-ok !$throttle->acquire('id1', 'key1', 1),
-    'limit < 0';
-
 #   * при limit = 0 acquire не проходит
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 0);
@@ -60,8 +54,10 @@ ok !$throttle->acquire('id5', 'key1', 1),
 
 #   * некорректные параметры
 
-throws_ok { Sub::Throttler::Periodic::EV->new('limit') } qr/hash/;
-throws_ok { Sub::Throttler::Periodic::EV->new(duration => 1) } qr/bad param/;
+throws_ok { Sub::Throttler::Periodic::EV->new('limit')      } qr/hash/;
+throws_ok { Sub::Throttler::Periodic::EV->new(limit => -2)  } qr/unsigned integer/;
+throws_ok { Sub::Throttler::Periodic::EV->new(limit => q{}) } qr/unsigned integer/;
+throws_ok { Sub::Throttler::Periodic::EV->new(duration => 1)} qr/bad param/;
 throws_ok { Sub::Throttler::Periodic::EV->new(duration => 1, limit => 1) } qr/bad param/;
 
 #   * ресурсы освобождаются не через period, а когда текущее время кратно period

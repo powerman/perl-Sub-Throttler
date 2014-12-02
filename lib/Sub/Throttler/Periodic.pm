@@ -56,7 +56,13 @@ sub release {
 sub tick {
     my $self = shift;
 
-    return if time < $self->{_at};
+    my $time = time;
+    if ($time < $self->{_at}) {
+        if ($time < $self->{_at} - $self->{period}) {   # time jump backward
+            $self->_reschedule;
+        }
+        return;
+    }
     $self->_reschedule;
 
     for my $id (keys %{ $self->{acquired} }) {
@@ -75,7 +81,11 @@ sub tick {
 
 sub tick_delay {
     my $self = shift;
-    my $delay = $self->{_at} - time;
+    my $time = time;
+    if ($self->{_at} - $time > $self->{period}) {   # time jump backward
+        $self->_reschedule;
+    }
+    my $delay = $self->{_at} - $time;
     return $delay < 0 ? 0 : $delay;
 }
 

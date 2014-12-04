@@ -100,7 +100,7 @@ TASK:
                 while (my ($key, $quantity) = each %{$resources}) {
                     die "Sub::Throttler: target returns bad quantity for '$key': $quantity\n"
                         if ref $quantity;
-                    if ($throttle->acquire($id, $key, $quantity)) {
+                    if ($throttle->try_acquire($id, $key, $quantity)) {
                         $acquired++;
                     }
                     else {
@@ -659,7 +659,7 @@ It's recommended to inherit your algorithm from L<Sub::Throttler::algo>.
 Each plugin must provide these methods (they'll be called by throttling
 engine):
 
-    sub acquire {
+    sub try_acquire {
         my ($self, $id, $key, $quantity) = @_;
         # try to acquire $quantity of resources named $key for
         # function/method identified by $id
@@ -685,8 +685,8 @@ engine):
 
 While trying to find out is there are enough resources to run some delayed
 function/method throttling engine may call C<release_unused()> immediately
-after successful C<acquire()> - if it turns out some other resource needed
-for same function/method isn't available.
+after successful C<try_acquire()> - if it turns out some other resource
+needed for same function/method isn't available.
 
 =over
 

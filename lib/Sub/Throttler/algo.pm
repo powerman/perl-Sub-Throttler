@@ -91,7 +91,7 @@ Sub::Throttler::algo - base class for throttling algorithms
     package Sub::Throttler::YourCustomAlgo;
     use parent qw( Sub::Throttler::algo );
     sub new { ... }
-    sub acquire { ... }
+    sub try_acquire { ... }
     sub release { ... }
     sub release_unused { ... }
     sub tick { ... }
@@ -211,16 +211,16 @@ they must be provided by algorithm module inherited from this base class.
 
 =over
 
-=item acquire
+=item try_acquire
 
-    my $is_acquired = $throttle->acquire($id, $key, $quantity);
+    my $is_acquired = $throttle->try_acquire($id, $key, $quantity);
 
 The throttling engine uses C<Scalar::Util::refaddr($done)> for C<$id>
 (large number), so it's safe for you to use either non-numbers as C<$id>
 or refaddr() of your own variables.
 
-    $throttle->acquire('reserve', 'default', 3) || die;
-    $throttle->acquire('extra reserve', 'default', 1) || die;
+    $throttle->try_acquire('reserve', 'default', 3) || die;
+    $throttle->try_acquire('extra reserve', 'default', 1) || die;
 
 Will throw if some C<$key> will be acquired more than once by same C<$id>
 or C<$quantity> is non-positive.
@@ -230,15 +230,15 @@ or C<$quantity> is non-positive.
     $throttle = $throttle->release($id);
 
 Release all resources previously acquired by one or more calls to
-L</"acquire"> using this C<$id> (this may or may not make them immediately
-available for acquiring again depending on plugin/algorithms).
+L</"try_acquire"> using this C<$id> (this may or may not make them
+immediately available for acquiring again depending on plugin/algorithms).
 
 =item release_unused
 
     $throttle = $throttle->release_unused($id);
 
 Release all resources previously acquired by one or more calls to
-L</"acquire"> using this C<$id>.
+L</"try_acquire"> using this C<$id>.
 
 Treat these resources as unused, to make it possible to reuse them as soon
 as possible (this may or may not differ from L</"release"> depending on

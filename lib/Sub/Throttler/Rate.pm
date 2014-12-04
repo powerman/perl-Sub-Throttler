@@ -31,7 +31,7 @@ sub new {
     return $self;
 }
 
-sub acquire {
+sub try_acquire {
     my ($self, $id, $key, $quantity) = @_;
     croak sprintf '%s already acquired %s', $id, $key
         if $self->{acquired}{$id} && exists $self->{acquired}{$id}{$key};
@@ -115,9 +115,9 @@ sub tick {
 # временем не станет (особенность алгоритма либо все ресурсы свободны).
 # Если tick_delay() используется для установки таймера на вызов tick(),
 # то получение 0 означает, что таймер надо либо останавливать до
-# следующего acquire(), либо взводить на period() sec (минимально
-# возможный интервал на случай если acquire() будет вызван немедленно).
-# Если tick_delay() вернул 0, _после_ чего провалился acquire() нужный
+# следующего try_acquire(), либо взводить на period() sec (минимально
+# возможный интервал на случай если try_acquire() будет вызван немедленно).
+# Если tick_delay() вернул 0, _после_ чего провалился try_acquire() нужный
 # синхронной функции, то выделить нужные ей ресурсы не получится.
 sub tick_delay {
     my $self = shift;
@@ -147,7 +147,7 @@ sub new {
 sub add {
     my ($self, $period, $time, $quantity) = @_;
     my $len = @{ $self->{data} };
-    # acquire() guarantee $quantity > 0, so we continue only if $len > 0
+    # try_acquire() guarantee $quantity > 0, so we continue only if $len > 0
     # (thus avoid division by zero on % $len) and there is a chance to add
     # $quantity elements
     if ($quantity > $len) {
@@ -190,7 +190,7 @@ sub after {
 
 sub del {
     my ($self, $time, $quantity) = @_;
-    # acquire() guarantee $quantity > 0
+    # try_acquire() guarantee $quantity > 0
     # even if $time is already outdated, these elements should be removed
     # anyway in case {period} will be increased later
     my $len = @{ $self->{data} };
@@ -316,7 +316,7 @@ Sub::Throttler::Rate - throttle by rate (quantity per time)
     });
     
     # --- Manual resource management
-    if ($throttle->acquire($id, $key, $quantity)) {
+    if ($throttle->try_acquire($id, $key, $quantity)) {
         ...
         $throttle->release($id);
         $throttle->release_unused($id);

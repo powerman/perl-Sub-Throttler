@@ -24,32 +24,32 @@ my $Flush = 0;
 #   * значение period по умолчанию 1
 
 $throttle = Sub::Throttler::Periodic::EV->new;
-ok $throttle->acquire('id1', 'key1', 1);
-ok !$throttle->acquire('id2', 'key1', 1);
+ok $throttle->try_acquire('id1', 'key1', 1);
+ok !$throttle->try_acquire('id2', 'key1', 1);
 is $throttle->limit, 1,
     'limit = 1';
 
 $t = EV::timer 1, 0, sub { EV::break };
 EV::run;
-ok $throttle->acquire('id2', 'key1', 1);
+ok $throttle->try_acquire('id2', 'key1', 1);
 is $throttle->period, 1,
     'period = 1';
 
-#   * при limit = 0 acquire не проходит
+#   * при limit = 0 try_acquire не проходит
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 0);
-ok !$throttle->acquire('id1', 'key1', 1),
+ok !$throttle->try_acquire('id1', 'key1', 1),
     'limit = 0';
 
-#   * при limit = n acquire даёт выделить до n (включительно) ресурса
+#   * при limit = n try_acquire даёт выделить до n (включительно) ресурса
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 10);
-$throttle->acquire('id1', 'key1', 3);
-$throttle->acquire('id2', 'key1', 3);
-$throttle->acquire('id3', 'key1', 3);
-ok $throttle->acquire('id4', 'key1', 1),
+$throttle->try_acquire('id1', 'key1', 3);
+$throttle->try_acquire('id2', 'key1', 3);
+$throttle->try_acquire('id3', 'key1', 3);
+ok $throttle->try_acquire('id4', 'key1', 1),
     'acquire = n';
-ok !$throttle->acquire('id5', 'key1', 1),
+ok !$throttle->try_acquire('id5', 'key1', 1),
     'attempt to acquire more than n';
 
 #   * некорректные параметры
@@ -67,28 +67,28 @@ EV::run;
 $t = EV::timer 0.3, 0, sub { EV::break };
 EV::run;
 $throttle = Sub::Throttler::Periodic::EV->new(period => 0.5);
-$throttle->acquire('id1', 'key1', 1);
-ok !$throttle->acquire('id2', 'key1', 1),
+$throttle->try_acquire('id1', 'key1', 1);
+ok !$throttle->try_acquire('id2', 'key1', 1),
     'resource was not released (time not multi-periodic)';
 $t = EV::timer 0.3, 0, sub { EV::break };
 EV::run;
-ok $throttle->acquire('id2', 'key1', 1),
+ok $throttle->try_acquire('id2', 'key1', 1),
     'resource released';
 
-# - acquire
+# - try_acquire
 #   * исключение при $quantity <= 0
 
 $throttle = Sub::Throttler::Periodic::EV->new;
-throws_ok { $throttle->acquire('id1', 'key1', -1) } qr/quantity must be positive/,
+throws_ok { $throttle->try_acquire('id1', 'key1', -1) } qr/quantity must be positive/,
     '$quantity < 0';
-throws_ok { $throttle->acquire('id1', 'key1', 0) } qr/quantity must be positive/,
+throws_ok { $throttle->try_acquire('id1', 'key1', 0) } qr/quantity must be positive/,
     '$quantity = 0';
 
 #   * повторный запрос для тех же $id и $key кидает исключение
 
 $throttle = Sub::Throttler::Periodic::EV->new;
-$throttle->acquire('id1', 'key1', 1);
-throws_ok { $throttle->acquire('id1', 'key1', 1) } qr/already acquired/,
+$throttle->try_acquire('id1', 'key1', 1);
+throws_ok { $throttle->try_acquire('id1', 'key1', 1) } qr/already acquired/,
     'same $id and $key';
 
 #   * возвращает истину/ложь в зависимости от того, удалось ли выделить
@@ -97,70 +97,70 @@ throws_ok { $throttle->acquire('id1', 'key1', 1) } qr/already acquired/,
 $t = EV::periodic 0, 0.2, 0, sub { EV::break };
 EV::run;
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5, period => 0.2);
-ok $throttle->acquire('id1', 'key1', 4),
+ok $throttle->try_acquire('id1', 'key1', 4),
     'return true for $key';
-ok !$throttle->acquire('id2', 'key1', 2),
+ok !$throttle->try_acquire('id2', 'key1', 2),
     'return false for $key';
 
 $t = EV::timer 0.1, 0, sub { EV::break };
 EV::run;
-ok !$throttle->acquire('id2', 'key1', 2);
+ok !$throttle->try_acquire('id2', 'key1', 2);
 $t = EV::timer 0.1, 0, sub { EV::break };
 EV::run;
-ok $throttle->acquire('id2', 'key1', 2);
+ok $throttle->try_acquire('id2', 'key1', 2);
 
 #   (использовать {used} для контроля текущего значения)
-#   * использовать разные значения $quantity так, чтобы последний acquire
+#   * использовать разные значения $quantity так, чтобы последний try_acquire
 #     попытался выделить:
 #     - текущее значение меньше limit, выделяется ровно под limit
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-$throttle->acquire('id1', 'key1', 3);
+$throttle->try_acquire('id1', 'key1', 3);
 is $throttle->{used}{key1}, 3,
     'used';
-ok $throttle->acquire('id2', 'key1', 2),
+ok $throttle->try_acquire('id2', 'key1', 2),
     'value < limit, acquiring to limit';
 is $throttle->{used}{key1}, 5;
 
 #     - текущее значение меньше limit, выделяется больше limit
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-$throttle->acquire('id1', 'key1', 3);
-ok !$throttle->acquire('id2', 'key1', 3),
+$throttle->try_acquire('id1', 'key1', 3);
+ok !$throttle->try_acquire('id2', 'key1', 3),
     'value < limit, acquiring above limit';
 is $throttle->{used}{key1}, 3;
 
 #     - текущее значение равно limit, выделяется 1
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-$throttle->acquire('id1', 'key1', 5);
-ok !$throttle->acquire('id2', 'key1', 1),
+$throttle->try_acquire('id1', 'key1', 5);
+ok !$throttle->try_acquire('id2', 'key1', 1),
     'value = limit, acquire 1';
 
 #   * под разные $key ресурсы выделяются независимо
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-ok $throttle->acquire('id1', 'key1', 5);
-ok $throttle->acquire('id1', 'key2', 5),
+ok $throttle->try_acquire('id1', 'key1', 5);
+ok $throttle->try_acquire('id1', 'key2', 5),
     'different $key are independent';
 
 #   * увеличиваем текущий limit()
-#     - проходят acquire, которые до этого не проходили
+#     - проходят try_acquire, которые до этого не проходили
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-$throttle->acquire('id1', 'key1', 4);
-ok !$throttle->acquire('id2', 'key1', 4);
+$throttle->try_acquire('id1', 'key1', 4);
+ok !$throttle->try_acquire('id2', 'key1', 4);
 $throttle->limit(10);
-ok $throttle->acquire('id2', 'key1', 4),
+ok $throttle->try_acquire('id2', 'key1', 4),
     'increase current limit()';
 
 #   * уменьшить текущий limit()
-#     - не проходят acquire, которые до этого бы прошли
+#     - не проходят try_acquire, которые до этого бы прошли
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 10);
-$throttle->acquire('id1', 'key1', 4);
+$throttle->try_acquire('id1', 'key1', 4);
 $throttle->limit(5);
-ok !$throttle->acquire('id2', 'key1', 4),
+ok !$throttle->try_acquire('id2', 'key1', 4),
     'decrease current limit()';
 
 # - release, release_unused
@@ -179,27 +179,27 @@ throws_ok { $throttle->release_unused('id1') } qr/not acquired/,
 #     - под $id был выделен один $key, период тот же
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 2);
-$throttle->acquire('id1', 'key1', 1);
-$throttle->acquire('id2', 'key2', 2);
-ok !$throttle->acquire('id3', 'key1', 2);
-ok !$throttle->acquire('id3', 'key2', 1);
+$throttle->try_acquire('id1', 'key1', 1);
+$throttle->try_acquire('id2', 'key2', 2);
+ok !$throttle->try_acquire('id3', 'key1', 2);
+ok !$throttle->try_acquire('id3', 'key2', 1);
 is $throttle->{used}{key1}, 1;
 $throttle->release_unused('id1');
 is $throttle->{used}{key1}, undef;
-ok $throttle->acquire('id3', 'key1', 2);
-ok !$throttle->acquire('id3', 'key2', 1);
+ok $throttle->try_acquire('id3', 'key1', 2);
+ok !$throttle->try_acquire('id3', 'key2', 1);
 is $throttle->{used}{key2}, 2;
 $throttle->release('id2');
 is $throttle->{used}{key2}, 2;
-ok !$throttle->acquire('id3', 'key2', 1);
+ok !$throttle->try_acquire('id3', 'key2', 1);
 
 #     - под $id был выделен один $key, период другой
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 2, period => 0.1);
-$throttle->acquire('id1', 'key1', 1);
-$throttle->acquire('id2', 'key2', 2);
-ok !$throttle->acquire('id3', 'key1', 2);
-ok !$throttle->acquire('id3', 'key2', 1);
+$throttle->try_acquire('id1', 'key1', 1);
+$throttle->try_acquire('id2', 'key2', 2);
+ok !$throttle->try_acquire('id3', 'key1', 2);
+ok !$throttle->try_acquire('id3', 'key2', 1);
 is $throttle->{used}{key1}, 1;
 is $throttle->{used}{key2}, 2;
 $t = EV::timer 0.1, 0, sub { EV::break };
@@ -216,39 +216,39 @@ is $throttle->{used}{key2}, undef;
 #     - под $id было выделено несколько $key, период тот же
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-$throttle->acquire('id1', 'key1', 1);
-$throttle->acquire('id1', 'key2', 2);
-$throttle->acquire('id1', 'key3', 3);
-$throttle->acquire('id2', 'key4', 4);
-$throttle->acquire('id2', 'key5', 5);
-ok !$throttle->acquire('id3', 'key1', 5);
-ok !$throttle->acquire('id3', 'key2', 4);
-ok !$throttle->acquire('id3', 'key3', 3);
-ok !$throttle->acquire('id3', 'key4', 2);
-ok !$throttle->acquire('id3', 'key5', 1);
+$throttle->try_acquire('id1', 'key1', 1);
+$throttle->try_acquire('id1', 'key2', 2);
+$throttle->try_acquire('id1', 'key3', 3);
+$throttle->try_acquire('id2', 'key4', 4);
+$throttle->try_acquire('id2', 'key5', 5);
+ok !$throttle->try_acquire('id3', 'key1', 5);
+ok !$throttle->try_acquire('id3', 'key2', 4);
+ok !$throttle->try_acquire('id3', 'key3', 3);
+ok !$throttle->try_acquire('id3', 'key4', 2);
+ok !$throttle->try_acquire('id3', 'key5', 1);
 $throttle->release('id1');
-ok !$throttle->acquire('id3', 'key1', 5);
-ok !$throttle->acquire('id3', 'key2', 4);
-ok !$throttle->acquire('id3', 'key3', 3);
-ok !$throttle->acquire('id3', 'key4', 2);
-ok !$throttle->acquire('id3', 'key5', 1);
+ok !$throttle->try_acquire('id3', 'key1', 5);
+ok !$throttle->try_acquire('id3', 'key2', 4);
+ok !$throttle->try_acquire('id3', 'key3', 3);
+ok !$throttle->try_acquire('id3', 'key4', 2);
+ok !$throttle->try_acquire('id3', 'key5', 1);
 $throttle->release_unused('id2');
-ok $throttle->acquire('id3', 'key4', 2);
-ok $throttle->acquire('id3', 'key5', 1);
+ok $throttle->try_acquire('id3', 'key4', 2);
+ok $throttle->try_acquire('id3', 'key5', 1);
 
 #     - под $id было выделено несколько $key, период другой
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5, period => 0.01);
-$throttle->acquire('id1', 'key1', 1);
-$throttle->acquire('id1', 'key2', 2);
-$throttle->acquire('id1', 'key3', 3);
-$throttle->acquire('id2', 'key4', 4);
-$throttle->acquire('id2', 'key5', 5);
-ok !$throttle->acquire('id3', 'key1', 5);
-ok !$throttle->acquire('id3', 'key2', 4);
-ok !$throttle->acquire('id3', 'key3', 3);
-ok !$throttle->acquire('id3', 'key4', 2);
-ok !$throttle->acquire('id3', 'key5', 1);
+$throttle->try_acquire('id1', 'key1', 1);
+$throttle->try_acquire('id1', 'key2', 2);
+$throttle->try_acquire('id1', 'key3', 3);
+$throttle->try_acquire('id2', 'key4', 4);
+$throttle->try_acquire('id2', 'key5', 5);
+ok !$throttle->try_acquire('id3', 'key1', 5);
+ok !$throttle->try_acquire('id3', 'key2', 4);
+ok !$throttle->try_acquire('id3', 'key3', 3);
+ok !$throttle->try_acquire('id3', 'key4', 2);
+ok !$throttle->try_acquire('id3', 'key5', 1);
 is $throttle->{used}{key1}, 1;
 is $throttle->{used}{key2}, 2;
 is $throttle->{used}{key3}, 3;
@@ -272,26 +272,26 @@ is $throttle->{used}{key4}, undef;
 is $throttle->{used}{key5}, undef;
 
 #   * уменьшить текущий limit()
-#     - после release текущее значение всё ещё >= limit, и acquire не проходит
+#     - после release текущее значение всё ещё >= limit, и try_acquire не проходит
 
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-$throttle->acquire('id1', 'key1', 1);
-$throttle->acquire('id2', 'key2', 2);
-$throttle->acquire('id3', 'key1', 4);
-$throttle->acquire('id3', 'key2', 3);
+$throttle->try_acquire('id1', 'key1', 1);
+$throttle->try_acquire('id2', 'key2', 2);
+$throttle->try_acquire('id3', 'key1', 4);
+$throttle->try_acquire('id3', 'key2', 3);
 $throttle->limit(3);
 $throttle->release('id1');
-ok !$throttle->acquire('id1', 'key1', 1);
+ok !$throttle->try_acquire('id1', 'key1', 1);
 $throttle->release_unused('id2');
-ok !$throttle->acquire('id2', 'key2', 1);
+ok !$throttle->try_acquire('id2', 'key2', 1);
 
 # - при освобождении ресурсов вызывается Sub::Throttler::throttle_flush()
 #   * только release_unused вызывает Sub::Throttler::throttle_flush()
 
 $Flush = 0;
 $throttle = Sub::Throttler::Periodic::EV->new(limit => 5);
-$throttle->acquire('id1', 'key1', 5);
-$throttle->acquire('id2', 'key2', 5);
+$throttle->try_acquire('id1', 'key1', 5);
+$throttle->try_acquire('id2', 'key2', 5);
 $throttle->release('id1');
 is $Flush, 0;
 $throttle->release_unused('id2');
@@ -302,7 +302,7 @@ is $Flush, 1;
 
 $Flush = 0;
 $throttle = Sub::Throttler::Periodic::EV->new(period => 0.5);
-$throttle->acquire('id1', 'key1', 1);
+$throttle->try_acquire('id1', 'key1', 1);
 $t = EV::timer 0.5, 0, sub { EV::break };
 EV::run;
 is $Flush, 1,
@@ -311,12 +311,12 @@ $t = EV::timer 0.5, 0, sub { EV::break };
 EV::run;
 is $Flush, 1,
     'resource was not acquired: throttle_flush() not called after period';
-$throttle->acquire('id1', 'key2', 1);
+$throttle->try_acquire('id1', 'key2', 1);
 $t = EV::timer 0.5, 0, sub { EV::break };
 EV::run;
 is $Flush, 2,
     'resource was acquired: throttle_flush() called after period';
-$throttle->acquire('id1', 'key3', 2);
+$throttle->try_acquire('id1', 'key3', 2);
 $t = EV::timer 0.5, 0, sub { EV::break };
 EV::run;
 is $Flush, 2,
@@ -356,7 +356,7 @@ EV::run;
 $throttle = Sub::Throttler::Periodic::EV->new(period => 0.5);
 is $throttle->period, 0.5,
     'period set to 0.5';
-$throttle->acquire('id1', 'key1', 1);
+$throttle->try_acquire('id1', 'key1', 1);
 $t = EV::timer 0.3, 0, sub { EV::break };
 EV::run;
 is $Flush, 0,
@@ -368,7 +368,7 @@ is $Flush, 1,
 
 $t = EV::periodic 0, 0.1, 0, sub { EV::break };
 EV::run;
-$throttle->acquire('id1', 'key2', 1);
+$throttle->try_acquire('id1', 'key2', 1);
 $throttle->period(0.1);
 is $throttle->period, 0.1,
     'set period to 0.1';
@@ -379,7 +379,7 @@ is $Flush, 2,
 
 $t = EV::periodic 0, 0.5, 0, sub { EV::break };
 EV::run;
-$throttle->acquire('id1', 'key3', 1);
+$throttle->try_acquire('id1', 'key3', 1);
 $throttle->period(0.5);
 is $throttle->period, 0.5,
     'set period to 0.5';

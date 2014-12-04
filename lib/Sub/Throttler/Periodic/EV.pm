@@ -23,9 +23,9 @@ sub new {
     return $self;
 }
 
-sub acquire {
+sub try_acquire {
     my $self = shift;
-    if ($self->SUPER::acquire(@_)) {
+    if ($self->SUPER::try_acquire(@_)) {
         $self->{_t}->keepalive(1);
         return 1;
     }

@@ -130,7 +130,7 @@ Sub::Throttler::Periodic - throttle by rate (quantity per time)
     });
     
     # --- Manual resource management
-    if ($throttle->acquire($id, $key, $quantity)) {
+    if ($throttle->try_acquire($id, $key, $quantity)) {
         ...
         $throttle->release($id);
         $throttle->release_unused($id);

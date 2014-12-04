@@ -27,7 +27,7 @@ sub new {
     return $self;
 }
 
-sub acquire {
+sub try_acquire {
     my ($self, $id, $key, $quantity) = @_;
     croak sprintf '%s already acquired %s', $id, $key
         if $self->{acquired}{$id} && exists $self->{acquired}{$id}{$key};

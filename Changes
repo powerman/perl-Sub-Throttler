@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 0.2.0   
+	acquire() renamed to try_acquire().
 	Add Sub::Throttler::Rate.
 	Removed used() API.
 	Replace Sub::Throttler::Rate::EV with Sub::Throttler::Periodic

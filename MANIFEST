@@ -5,6 +5,7 @@ lib/Sub/Throttler/algo.pm
 lib/Sub/Throttler/Limit.pm
 lib/Sub/Throttler/Periodic.pm
 lib/Sub/Throttler/Periodic/EV.pm
+lib/Sub/Throttler/Rate.pm
 MANIFEST			This list of files
 META.json
 META.yml

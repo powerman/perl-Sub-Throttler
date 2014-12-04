@@ -12,8 +12,9 @@ use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
 # REMINDER: update dependencies in Build.PL
 use parent qw( Sub::Throttler::algo );
 use Sub::Throttler qw( throttle_flush );
-use Time::HiRes qw( clock_gettime CLOCK_MONOTONIC );
+use Time::HiRes qw( clock_gettime CLOCK_MONOTONIC sleep );
 use List::Util qw( min );
+use EV;
 
 
 sub new {
@@ -28,6 +29,24 @@ sub new {
     croak 'limit must be an unsigned integer' if $self->{limit} !~ /\A\d+\z/ms;
     croak 'period must be a positive number' if $self->{period} <= 0;
     croak 'bad param: '.(keys %opt)[0] if keys %opt;
+    weaken(my $this = $self);
+    $self->{_t} = EV::timer_ns 0, 0, sub { $this && $this->_tick() };
+    $self->{_t}->keepalive(0);
+    return $self;
+}
+
+sub acquire {
+    my ($self, $id, $key, $quantity) = @_;
+    if (!$self->try_acquire($id, $key, $quantity)) {
+        if ($quantity <= $self->{limit}) {
+            my $time = clock_gettime(CLOCK_MONOTONIC);
+            my $delay = $self->{used}{$key}->get($quantity) + $self->{period} - $time;
+            sleep $delay;
+        }
+        if (!$self->try_acquire($id, $key, $quantity)) {
+            croak "$self: unable to acquire $quantity of resource '$key'";
+        }
+    }
     return $self;
 }
 
@@ -61,7 +80,13 @@ sub period {
     my $resources_increases = $self->{period} > $period;
     $self->{period} = $period;
     if ($resources_increases) {
-        throttle_flush();
+        if ($self->{_t}->is_active) {
+            $self->{_t}->stop;
+            $self->_tick();
+        }
+        else {
+            throttle_flush();
+        }
     }
     return $self;
 }
@@ -86,29 +111,6 @@ sub release_unused {
     return $self;
 }
 
-sub tick {
-    my $self = shift;
-    throttle_flush();
-    return;
-}
-
-# Возвращает через сколько времени станет доступно больше ресурсов (в этот
-# момент желательно вызвать tick() для освобождения и попытки
-# использования освободившихся ресурсов) либо 0 если больше ресурсов со
-# временем не станет (особенность алгоритма либо все ресурсы свободны).
-# Если tick_delay() используется для установки таймера на вызов tick(),
-# то получение 0 означает, что таймер надо либо останавливать до
-# следующего try_acquire(), либо взводить на period() sec (минимально
-# возможный интервал на случай если try_acquire() будет вызван немедленно).
-# Если tick_delay() вернул 0, _после_ чего провалился try_acquire() нужный
-# синхронной функции, то выделить нужные ей ресурсы не получится.
-sub tick_delay {
-    my $self = shift;
-    my $time = clock_gettime(CLOCK_MONOTONIC) - $self->{period};
-    my $when = min map { $_->after($time) } values %{ $self->{used} };
-    return !$when ? 0 : $when-$time;
-}
-
 sub try_acquire {
     my ($self, $id, $key, $quantity) = @_;
     croak sprintf '%s already acquired %s', $id, $key
@@ -123,7 +125,27 @@ sub try_acquire {
     }
 
     $self->{acquired}{$id}{$key} = [$time, $quantity];
+    if (!$self->{_t}->is_active) {
+        $self->{_t}->keepalive(1);
+        $self->{_t}->set($self->{period}, 0);
+        $self->{_t}->start;
+    }
     return 1;
+}
+
+sub _tick {
+    my $self = shift;
+    my $time = clock_gettime(CLOCK_MONOTONIC) - $self->{period};
+    my $when = min map { $_->after($time) } values %{ $self->{used} };
+    if ($when) {
+        $self->{_t}->set($when-$time, 0);
+        $self->{_t}->start;
+    }
+    else {
+        $self->{_t}->keepalive(0);
+    }
+    throttle_flush();
+    return;
 }
 
 
@@ -259,7 +281,16 @@ sub resize {
     } else {
         push @{ $self->{data} }, (0) x ($newlen - $len);
     }
-    return;
+    return $self;
+}
+
+sub get {
+    my ($self, $id) = @_;
+    # $id is number of required element, counting from oldest one ($id = 1)
+    my $len = @{ $self->{data} };
+    # acquire() guarantee 0 < $id <= $len
+    my $i = ($self->{next} + $id - 1) % $len;
+    return $self->{data}[$i];
 }
 
 # From List::BinarySearch::PP version 0.23.

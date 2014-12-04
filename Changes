@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 0.2.0   
+	Replace tick()/tick_delay() with acquire().
 	acquire() renamed to try_acquire().
 	Add Sub::Throttler::Rate.
 	Removed used() API.

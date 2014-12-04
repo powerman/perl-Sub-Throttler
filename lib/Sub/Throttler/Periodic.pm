@@ -12,7 +12,7 @@ use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
 # REMINDER: update dependencies in Build.PL
 use parent qw( Sub::Throttler::Limit );
 use Sub::Throttler qw( throttle_flush );
-use Time::HiRes qw( time );
+use Time::HiRes qw( time sleep );
 
 
 sub new {
@@ -23,12 +23,27 @@ sub new {
         period  => delete $opt{period} // 1,
         acquired=> {},  # { $id => { $key => $quantity, … }, … }
         used    => {},  # { $key => $quantity, … }
-        _at     => 0,   # next time when free all resources
         }, ref $class || $class;
     croak 'limit must be an unsigned integer' if $self->{limit} !~ /\A\d+\z/ms;
     croak 'period must be a positive number' if $self->{period} <= 0;
     croak 'bad param: '.(keys %opt)[0] if keys %opt;
-    return $self->_reschedule;
+    return $self;
+}
+
+sub acquire {
+    my ($self, $id, $key, $quantity) = @_;
+    if (!$self->try_acquire($id, $key, $quantity)) {
+        if ($quantity <= $self->{limit} && $self->{used}{$key}) {
+            my $time = time;
+            my $delay = int($time/$self->{period})*$self->{period} + $self->{period} - $time;
+            sleep $delay;
+            $self->_tick();
+        }
+        if (!$self->try_acquire($id, $key, $quantity)) {
+            croak "$self: unable to acquire $quantity of resource '$key'";
+        }
+    }
+    return $self;
 }
 
 sub period {
@@ -38,7 +53,7 @@ sub period {
     }
     croak 'period must be a positive number' if $period <= 0;
     $self->{period} = $period;
-    return $self->_reschedule;
+    return $self;
 }
 
 # TODO сделать $data=dump() и restore($data), только для Rate и Periodic,
@@ -53,18 +68,8 @@ sub release {
     return $self;
 }
 
-sub tick {
+sub _tick {
     my $self = shift;
-
-    my $time = time;
-    if ($time < $self->{_at}) {
-        if ($time < $self->{_at} - $self->{period}) {   # time jump backward
-            $self->_reschedule;
-        }
-        return;
-    }
-    $self->_reschedule;
-
     for my $id (keys %{ $self->{acquired} }) {
         for my $key (keys %{ $self->{acquired}{$id} }) {
             $self->{acquired}{$id}{$key} = 0;
@@ -77,22 +82,6 @@ sub tick {
         throttle_flush();
     }
     return;
-}
-
-sub tick_delay {
-    my $self = shift;
-    my $time = time;
-    if ($self->{_at} - $time > $self->{period}) {   # time jump backward
-        $self->_reschedule;
-    }
-    my $delay = $self->{_at} - $time;
-    return $delay < 0 ? 0 : $delay;
-}
-
-sub _reschedule {
-    my $self = shift;
-    $self->{_at} = int(time/$self->{period})*$self->{period} + $self->{period};
-    return $self;
 }
 
 
@@ -146,12 +135,8 @@ This algorithm works like L<Sub::Throttler::Limit> with one difference:
 when current time is divisible by given period value all used resources
 will be made available for acquiring again.
 
-It doesn't use event loops, but to keep it going you have to manually call
-L</"tick"> periodically - either just often enough (like every 0.01 sec or
-about 1/10 of L</"period"> sec) or precisely when needed by delaying next
-call by L</"tick_delay"> sec. If your application use L<EV> event loop you
-can use L<Sub::Throttler::Periodic::EV> instead of this module to have
-L</"tick"> called automatically.
+You should use implementation specific to your event loop (like
+L<Sub::Throttler::Periodic::EV>) instead of this module.
 
 
 =head1 EXPORTS

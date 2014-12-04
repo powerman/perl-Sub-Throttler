@@ -18,7 +18,7 @@ use EV;
 sub new {
     my $self = shift->SUPER::new(@_);
     weaken(my $this = $self);
-    $self->{_t} = EV::periodic 0, $self->{period}, 0, sub { $this && $this->tick() };
+    $self->{_t} = EV::periodic 0, $self->{period}, 0, sub { $this && $this->_tick() };
     $self->{_t}->keepalive(0);
     return $self;
 }
@@ -82,8 +82,8 @@ See L<Sub::Throttler::Periodic> for more examples.
 This is a plugin for L<Sub::Throttler> providing simple algorithm for
 throttling by rate (quantity per time) of used resources.
 
-This algorithm works like L<Sub::Throttler::Periodic> with one difference:
-you don't have to manually call L<Sub::Throttler::Periodic/"tick">.
+This is implementation of L<Sub::Throttler::Periodic> algorithm for
+applications using L<EV> event loop.
 
 It uses EV::timer, but will avoid keeping your event loop running when it
 doesn't needed anymore (if there are no acquired resources).

@@ -659,6 +659,20 @@ It's recommended to inherit your algorithm from L<Sub::Throttler::algo>.
 Each plugin must provide these methods (they'll be called by throttling
 engine):
 
+    sub acquire {
+        my ($self, $id, $key, $quantity) = @_;
+        if ('resource temporary unavailable') {
+            # wait for resource (don't use external event loop or
+            # anything else which may call user's code/callbacks!)
+            sleep(...);
+        }
+        # acquire $quantity of resources named $key for
+        # function/method identified by $id
+        if ('failed to acquire') {
+            croak "$self: unable to acquire $quantity of resource '$key'";
+        }
+        return $self;
+    }
     sub try_acquire {
         my ($self, $id, $key, $quantity) = @_;
         # try to acquire $quantity of resources named $key for
@@ -666,21 +680,23 @@ engine):
         if ('failed to acquire') {
             return;
         }
-        return 1;   # resource acquired
+        return 1;
     }
     sub release {
         my ($self, $id) = @_;
         # release resources previously acquired for $id
-        if ('some resources was freed') {
+        if ('amount of available resources was increased') {
             throttle_flush();
         }
+        return $self;
     }
     sub release_unused {
         my ($self, $id) = @_;
         # cancel unused resources previously acquired for $id
-        if ('some resources was freed') {
+        if ('amount of available resources was increased') {
             throttle_flush();
         }
+        return $self;
     }
 
 While trying to find out is there are enough resources to run some delayed

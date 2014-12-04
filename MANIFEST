@@ -21,7 +21,6 @@ t/done-error.t
 t/limit.t
 t/manifest.t
 t/periodic-ev.t
-t/periodic.t
 t/perlcritic.t
 t/pod-coverage.t
 t/pod.t

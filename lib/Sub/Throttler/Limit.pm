@@ -27,6 +27,14 @@ sub new {
     return $self;
 }
 
+sub acquire {
+    my ($self, $id, $key, $quantity) = @_;
+    if (!$self->try_acquire($id, $key, $quantity)) {
+        croak "$self: unable to acquire $quantity of resource '$key'";
+    }
+    return $self;
+}
+
 sub limit {
     my ($self, $limit) = @_;
     if (1 == @_) {
@@ -49,14 +57,6 @@ sub release {
 
 sub release_unused {
     return _release(@_);
-}
-
-sub tick {
-    croak 'tick() and throttling sync sub is not supported by ' . ref shift;
-}
-
-sub tick_delay {
-    return 0;
 }
 
 sub try_acquire {

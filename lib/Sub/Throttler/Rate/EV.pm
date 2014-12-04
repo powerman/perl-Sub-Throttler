@@ -1,4 +1,4 @@
-package Sub::Throttler::Rate;
+package Sub::Throttler::Rate::EV;
 
 use warnings;
 use strict;
@@ -14,6 +14,7 @@ use parent qw( Sub::Throttler::algo );
 use Sub::Throttler qw( throttle_flush );
 use Time::HiRes qw( clock_gettime CLOCK_MONOTONIC sleep );
 use List::Util qw( min );
+use Scalar::Util qw( weaken );
 use EV;
 
 
@@ -39,8 +40,8 @@ sub acquire {
     my ($self, $id, $key, $quantity) = @_;
     if (!$self->try_acquire($id, $key, $quantity)) {
         if ($quantity <= $self->{limit}) {
-            my $time = clock_gettime(CLOCK_MONOTONIC);
-            my $delay = $self->{used}{$key}->get($quantity) + $self->{period} - $time;
+            my $now = clock_gettime(CLOCK_MONOTONIC);
+            my $delay = $self->{used}{$key}->get($quantity) + $self->{period} - $now;
             sleep $delay;
         }
         if (!$self->try_acquire($id, $key, $quantity)) {
@@ -102,9 +103,14 @@ sub release_unused {
     my ($self, $id) = @_;
     croak sprintf '%s not acquired anything', $id if !$self->{acquired}{$id};
 
-    for my $key (keys %{ $self->{acquired}{$id} }) {
+    my $now = clock_gettime(CLOCK_MONOTONIC);
+    for my $key (grep {$self->{used}{$_}} keys %{ $self->{acquired}{$id} }) {
         my ($time, $quantity) = @{ $self->{acquired}{$id}{$key} };
         $self->{used}{$key}->del($time, $quantity);
+        # clean up (avoid memory leak in long run with unique keys)
+        if ($self->{used}{$key}->get($self->{limit}) + $self->{period} <= $now) {
+            delete $self->{used}{$key};
+        }
     }
     delete $self->{acquired}{$id};
     throttle_flush();
@@ -117,14 +123,14 @@ sub try_acquire {
         if $self->{acquired}{$id} && exists $self->{acquired}{$id}{$key};
     croak 'quantity must be positive' if $quantity <= 0;
 
-    my $time = clock_gettime(CLOCK_MONOTONIC);
+    my $now = clock_gettime(CLOCK_MONOTONIC);
 
     $self->{used}{$key} ||= Sub::Throttler::Rate::rr->new($self->{limit});
-    if (!$self->{used}{$key}->add($self->{period}, $time, $quantity)) {
+    if (!$self->{used}{$key}->add($self->{period}, $now, $quantity)) {
         return;
     }
 
-    $self->{acquired}{$id}{$key} = [$time, $quantity];
+    $self->{acquired}{$id}{$key} = [$now, $quantity];
     if (!$self->{_t}->is_active) {
         $self->{_t}->keepalive(1);
         $self->{_t}->set($self->{period}, 0);
@@ -135,10 +141,19 @@ sub try_acquire {
 
 sub _tick {
     my $self = shift;
-    my $time = clock_gettime(CLOCK_MONOTONIC) - $self->{period};
-    my $when = min map { $_->after($time) } values %{ $self->{used} };
+    my $now  = clock_gettime(CLOCK_MONOTONIC);
+    my $when = 0;
+    for my $key (keys %{ $self->{used} }) {
+        my $after = $self->{used}{$key}->after($now - $self->{period});
+        if (!$after) {
+            delete $self->{used}{$key};
+        }
+        elsif (!$when || $when > $after) {
+            $when = $after;
+        }
+    }
     if ($when) {
-        $self->{_t}->set($when-$time, 0);
+        $self->{_t}->set($when + $self->{period} - $now, 0);
         $self->{_t}->start;
     }
     else {
@@ -269,21 +284,6 @@ sub del {
     return;
 }
 
-sub resize {
-    my ($self, $newlen) = @_;
-    # limit() guarantee $newlen >= 0
-    my @a = @{ $self->{data} };
-    $self->{data} = [ @a[ $self->{next} .. $#a ], @a[ 0 .. $self->{next} - 1 ] ];
-    $self->{next} = 0;
-    my $len = @{ $self->{data} };
-    if ($newlen < $len) {
-        splice @{ $self->{data} }, 0, $len - $newlen;
-    } else {
-        push @{ $self->{data} }, (0) x ($newlen - $len);
-    }
-    return $self;
-}
-
 sub get {
     my ($self, $id) = @_;
     # $id is number of required element, counting from oldest one ($id = 1)
@@ -291,6 +291,22 @@ sub get {
     # acquire() guarantee 0 < $id <= $len
     my $i = ($self->{next} + $id - 1) % $len;
     return $self->{data}[$i];
+}
+
+sub resize {
+    my ($self, $newlen) = @_;
+    # limit() guarantee $newlen >= 0
+    my $len = @{ $self->{data} };
+    my $d = $self->{data};
+    $self->{data} = [ @{$d}[ $self->{next} .. $#{$d} ], @{$d}[ 0 .. $self->{next} - 1 ] ];
+    if ($newlen < $len) {
+        $self->{next} = 0;
+        splice @{ $self->{data} }, 0, $len - $newlen;
+    } else {
+        $self->{next} = $len % $newlen;
+        push @{ $self->{data} }, (0) x ($newlen - $len);
+    }
+    return $self;
 }
 
 # From List::BinarySearch::PP version 0.23.
@@ -320,15 +336,15 @@ __END__
 
 =head1 NAME
 
-Sub::Throttler::Rate - throttle by rate (quantity per time)
+Sub::Throttler::Rate::EV - throttle by rate (quantity per time)
 
 
 =head1 SYNOPSIS
 
-    use Sub::Throttler::Rate;
+    use Sub::Throttler::Rate::EV;
     
     # default limit=1, period=1
-    my $throttle = Sub::Throttler::Rate->new(period => 0.1, limit => 42);
+    my $throttle = Sub::Throttler::Rate::EV->new(period => 0.1, limit => 42);
     
     my $limit = $throttle->limit;
     $throttle->limit(42);
@@ -363,6 +379,9 @@ This algorithm works like L<Sub::Throttler::Limit> with one difference:
 resources acquired earlier than given period value will be made available
 for acquiring again.
 
+It uses EV::timer, but will avoid keeping your event loop running when it
+doesn't needed anymore (if there are no acquired resources).
+
 
 =head1 EXPORTS
 
@@ -371,15 +390,15 @@ Nothing.
 
 =head1 INTERFACE
 
-L<Sub::Throttler::Rate> inherits all methods from L<Sub::Throttler::algo>
+L<Sub::Throttler::Rate::EV> inherits all methods from L<Sub::Throttler::algo>
 and implements the following ones.
 
 =over
 
 =item new
 
-    my $throttle = Sub::Throttler::Rate->new;
-    my $throttle = Sub::Throttler::Rate->new(period => 0.1, limit => 42);
+    my $throttle = Sub::Throttler::Rate::EV->new;
+    my $throttle = Sub::Throttler::Rate::EV->new(period => 0.1, limit => 42);
 
 Create and return new instance of this algorithm.
 

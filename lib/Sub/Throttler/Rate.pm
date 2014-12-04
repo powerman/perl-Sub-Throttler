@@ -31,23 +31,6 @@ sub new {
     return $self;
 }
 
-sub try_acquire {
-    my ($self, $id, $key, $quantity) = @_;
-    croak sprintf '%s already acquired %s', $id, $key
-        if $self->{acquired}{$id} && exists $self->{acquired}{$id}{$key};
-    croak 'quantity must be positive' if $quantity <= 0;
-
-    my $time = clock_gettime(CLOCK_MONOTONIC);
-
-    $self->{used}{$key} ||= Sub::Throttler::Rate::rr->new($self->{limit});
-    if (!$self->{used}{$key}->add($self->{period}, $time, $quantity)) {
-        return;
-    }
-
-    $self->{acquired}{$id}{$key} = [$time, $quantity];
-    return 1;
-}
-
 sub limit {
     my ($self, $limit) = @_;
     if (1 == @_) {
@@ -124,6 +107,23 @@ sub tick_delay {
     my $time = clock_gettime(CLOCK_MONOTONIC) - $self->{period};
     my $when = min map { $_->after($time) } values %{ $self->{used} };
     return !$when ? 0 : $when-$time;
+}
+
+sub try_acquire {
+    my ($self, $id, $key, $quantity) = @_;
+    croak sprintf '%s already acquired %s', $id, $key
+        if $self->{acquired}{$id} && exists $self->{acquired}{$id}{$key};
+    croak 'quantity must be positive' if $quantity <= 0;
+
+    my $time = clock_gettime(CLOCK_MONOTONIC);
+
+    $self->{used}{$key} ||= Sub::Throttler::Rate::rr->new($self->{limit});
+    if (!$self->{used}{$key}->add($self->{period}, $time, $quantity)) {
+        return;
+    }
+
+    $self->{acquired}{$id}{$key} = [$time, $quantity];
+    return 1;
 }
 
 

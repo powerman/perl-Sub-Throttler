@@ -23,15 +23,6 @@ sub new {
     return $self;
 }
 
-sub try_acquire {
-    my $self = shift;
-    if ($self->SUPER::try_acquire(@_)) {
-        $self->{_t}->keepalive(1);
-        return 1;
-    }
-    return;
-}
-
 sub period {
     if (1 == @_) {
         return shift->SUPER::period();
@@ -55,6 +46,15 @@ sub release_unused {
         $self->{_t}->keepalive(0);
     }
     return $self;
+}
+
+sub try_acquire {
+    my $self = shift;
+    if ($self->SUPER::try_acquire(@_)) {
+        $self->{_t}->keepalive(1);
+        return 1;
+    }
+    return;
 }
 
 

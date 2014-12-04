@@ -27,22 +27,6 @@ sub new {
     return $self;
 }
 
-sub try_acquire {
-    my ($self, $id, $key, $quantity) = @_;
-    croak sprintf '%s already acquired %s', $id, $key
-        if $self->{acquired}{$id} && exists $self->{acquired}{$id}{$key};
-    croak 'quantity must be positive' if $quantity <= 0;
-
-    my $used = $self->{used}{$key} || 0;
-    if ($used + $quantity > $self->{limit}) {
-        return;
-    }
-    $self->{used}{$key} = $used + $quantity;
-
-    $self->{acquired}{$id}{$key} = $quantity;
-    return 1;
-}
-
 sub limit {
     my ($self, $limit) = @_;
     if (1 == @_) {
@@ -73,6 +57,22 @@ sub tick {
 
 sub tick_delay {
     return 0;
+}
+
+sub try_acquire {
+    my ($self, $id, $key, $quantity) = @_;
+    croak sprintf '%s already acquired %s', $id, $key
+        if $self->{acquired}{$id} && exists $self->{acquired}{$id}{$key};
+    croak 'quantity must be positive' if $quantity <= 0;
+
+    my $used = $self->{used}{$key} || 0;
+    if ($used + $quantity > $self->{limit}) {
+        return;
+    }
+    $self->{used}{$key} = $used + $quantity;
+
+    $self->{acquired}{$id}{$key} = $quantity;
+    return 1;
 }
 
 sub _release {

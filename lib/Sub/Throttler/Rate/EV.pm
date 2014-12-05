@@ -59,8 +59,8 @@ sub limit {
         return $self->{limit};
     }
     croak 'limit must be an unsigned integer' if $limit !~ /\A\d+\z/ms;
-    # OPTIMIZATION вызывать throttle_flush() только если могли появиться
-    # свободные ресурсы (т.е. при увеличении limit)
+    # OPTIMIZATION call throttle_flush() only if amount of available
+    # resources increased (i.e. limit was increased)
     my $resources_increases = $self->{limit} < $limit;
     $self->{limit} = $limit;
     for my $rr (values %{ $self->{used} }) {
@@ -108,8 +108,8 @@ sub period {
     }
     croak 'period must be a positive number' if $period <= 0;
     croak 'period is too large' if $self->{period} >= -Sub::Throttler::Rate::rr::EMPTY();
-    # OPTIMIZATION вызывать throttle_flush() только если могли появиться
-    # свободные ресурсы (т.е. при уменьшении period)
+    # OPTIMIZATION call throttle_flush() only if amount of available
+    # resources increased (i.e. period was decreased)
     my $resources_increases = $self->{period} > $period;
     $self->{period} = $period;
     if ($resources_increases) {
@@ -264,7 +264,7 @@ sub add {
     return 1;
 }
 
-# Возвращает время первого ресурса выделенного после момента $time либо ничего.
+# Return time of acquiring first resource after $time or nothing.
 sub after {
     my ($self, $time) = @_;
     # _tick() guarantee $time > EMPTY

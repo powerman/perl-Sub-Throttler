@@ -125,8 +125,8 @@ sub _tick {
             $self->{acquired}{$id}{$key} = 0;
         }
     }
-    # OPTIMIZATION вызывать throttle_flush() только если могли появиться
-    # свободные ресурсы (т.е. если какие-то ресурсы освободились)
+    # OPTIMIZATION call throttle_flush() only if amount of available
+    # resources increased (i.e. if some sources was released)
     if (keys %{ $self->{used} }) {
         $self->{used} = {};
         throttle_flush();

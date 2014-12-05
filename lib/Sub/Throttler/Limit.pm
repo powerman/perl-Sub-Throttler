@@ -41,8 +41,8 @@ sub limit {
         return $self->{limit};
     }
     croak 'limit must be an unsigned integer' if $limit !~ /\A\d+\z/ms;
-    # OPTIMIZATION вызывать throttle_flush() только если могли появиться
-    # свободные ресурсы (т.е. при увеличении limit)
+    # OPTIMIZATION call throttle_flush() only if amount of available
+    # resources increased (i.e. limit was increased)
     my $resources_increases = $self->{limit} < $limit;
     $self->{limit} = $limit;
     if ($resources_increases) {

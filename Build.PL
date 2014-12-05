@@ -40,6 +40,7 @@ my $builder = $class->new(
         'Test::Pod'             => '1.22',
         'Test::Pod::Coverage'   => '1.08',
         'Pod::Coverage'         => '0.18',
+        'JSON::XS'              => 0,
     },
 #     add_to_cleanup     => [ 'Sub-Throttler-*' ],
 );

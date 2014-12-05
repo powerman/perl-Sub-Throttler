@@ -24,4 +24,5 @@ t/perlcritic.t
 t/pod-coverage.t
 t/pod.t
 t/rate-ev.t
+t/saveload.t
 t/throttle.t

@@ -12,9 +12,10 @@ use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
 # REMINDER: update dependencies in Build.PL
 use parent qw( Sub::Throttler::algo );
 use Sub::Throttler qw( throttle_flush );
-use Time::HiRes qw( clock_gettime CLOCK_MONOTONIC sleep );
+use Time::HiRes qw( clock_gettime CLOCK_MONOTONIC time sleep );
 use List::Util qw( min );
 use Scalar::Util qw( weaken );
+use Storable qw( dclone );
 use EV;
 
 
@@ -29,6 +30,7 @@ sub new {
         }, ref $class || $class;
     croak 'limit must be an unsigned integer' if $self->{limit} !~ /\A\d+\z/ms;
     croak 'period must be a positive number' if $self->{period} <= 0;
+    croak 'period is too large' if $self->{period} >= -Sub::Throttler::Rate::rr::EMPTY();
     croak 'bad param: '.(keys %opt)[0] if keys %opt;
     weaken(my $this = $self);
     $self->{_t} = EV::timer_ns 0, 0, sub { $this && $this->_tick() };
@@ -70,12 +72,42 @@ sub limit {
     return $self;
 }
 
+sub load {
+    my ($class, $state) = @_;
+    croak 'bad state: wrong algorithm' if $state->{algo} ne __PACKAGE__;
+    my $v = version->parse($state->{version});
+    if ($v > $VERSION) {
+        carp 'restoring state saved by future version';
+    }
+    my $self = $class->new(limit=>$state->{limit}, period=>$state->{period});
+    $self->{used} = dclone($state->{used});
+    my ($time, $now) = (time, clock_gettime(CLOCK_MONOTONIC));
+    # time jump backward, no matter how much, handled like we still is in
+    # current period, to be safe
+    if ($state->{at} > $time) {
+        $time = $state->{at};
+    }
+    my $diff = $time - $now;
+    for my $data (map {$_->{data}} values %{ $self->{used} }) {
+        for (@{ $data }) {
+            if ($_ != Sub::Throttler::Rate::rr::EMPTY()) {
+                $_ -= $diff;
+            }
+        }
+    }
+    for (values %{ $self->{used} }) {
+        bless $_, 'Sub::Throttler::Rate::rr';
+    }
+    return $self;
+}
+
 sub period {
     my ($self, $period) = @_;
     if (1 == @_) {
         return $self->{period};
     }
     croak 'period must be a positive number' if $period <= 0;
+    croak 'period is too large' if $self->{period} >= -Sub::Throttler::Rate::rr::EMPTY();
     # OPTIMIZATION вызывать throttle_flush() только если могли появиться
     # свободные ресурсы (т.е. при уменьшении period)
     my $resources_increases = $self->{period} > $period;
@@ -115,6 +147,31 @@ sub release_unused {
     delete $self->{acquired}{$id};
     throttle_flush();
     return $self;
+}
+
+sub save {
+    my ($self) = @_;
+    my ($time, $now) = (time, clock_gettime(CLOCK_MONOTONIC));
+    my $diff = $time - $now;
+    my $state = {
+        algo    => __PACKAGE__,
+        version => $VERSION->numify,
+        limit   => $self->{limit},
+        period  => $self->{period},
+        used    => dclone($self->{used}),
+        at      => $time,
+    };
+    for my $data (map {$_->{data}} values %{ $state->{used} }) {
+        for (@{ $data }) {
+            if ($_ != Sub::Throttler::Rate::rr::EMPTY()) {
+                $_ += $diff;
+            }
+        }
+    }
+    for (values %{ $state->{used} }) {
+        $_ = {%{ $_ }}; # unbless
+    }
+    return $state;
 }
 
 sub try_acquire {
@@ -171,12 +228,14 @@ use utf8;
 use feature ':5.10';
 use Carp;
 
+use constant EMPTY => -1_000_000_000;
+
 
 sub new {
     my ($class, $len) = @_;
     my $self = bless {
         next => 0,
-        data => [ (0) x $len ],
+        data => [ (EMPTY) x $len ],
         }, ref $class || $class;
     return $self;
 }
@@ -193,7 +252,7 @@ sub add {
     my $required = ($self->{next} + $quantity - 1) % $len;
     # {data} is sorted, last added element ($self->{next}-1) is guaranteed
     # to be largest of all elements, so all elements between (inclusive)
-    # $self->{next} and $required are guaranteed to be either 0 (unused yet)
+    # $self->{next} and $required are guaranteed to be either EMPTY
     # or <= $self->{next}-1 element, and $required element is largest of them
     if ($self->{data}[$required] > $time - $period) {
         return;
@@ -208,9 +267,7 @@ sub add {
 # Возвращает время первого ресурса выделенного после момента $time либо ничего.
 sub after {
     my ($self, $time) = @_;
-    if ($time < 0) {
-        $time = 0;
-    }
+    # _tick() guarantee $time > EMPTY
     my $len = @{ $self->{data} };
     for (1 .. $len) {
         $_ = ($self->{next} + $_ - 1) % $len;
@@ -240,14 +297,14 @@ sub del {
         for (map { ($self->{next} + $_ - 1) % $len } 1 .. $quantity) {
             # part of $quantity may be not in {data} (if {limit} was decreased)
             return if $self->{data}[ $_ ] != $time;
-            $self->{data}[ $_ ] = 0;
+            $self->{data}[ $_ ] = EMPTY;
         }
     }
     # OPTIMIZATION newest
     elsif ($self->{data}[ $self->{next} - 1 ] == $time) {
         for (map { $self->{next} - $_ } 1 .. $quantity) {
             croak 'assert: newest: no time' if $self->{data}[ $_ ] != $time;
-            $self->{data}[ $_ ] = 0;
+            $self->{data}[ $_ ] = EMPTY;
         }
         $self->{next} = ($self->{next} - $quantity) % $len;
     }
@@ -258,7 +315,7 @@ sub del {
         croak 'assert: middle: not found' if !defined $i;
         for (map { ($i + $_ - 1) % $len } 1 .. $quantity) {
             croak 'assert: middle: no time' if $self->{data}[ $_ ] != $time;
-            $self->{data}[ $_ ] = 0;
+            $self->{data}[ $_ ] = EMPTY;
         }
         # OPTIMIZATION move minimum amount of elements
         my $count_rew = ($self->{next} - $i) % $len;
@@ -298,7 +355,7 @@ sub resize {
         splice @{ $self->{data} }, 0, $len - $newlen;
     } else {
         $self->{next} = $len % $newlen;
-        push @{ $self->{data} }, (0) x ($newlen - $len);
+        push @{ $self->{data} }, (EMPTY) x ($newlen - $len);
     }
     return $self;
 }
@@ -420,6 +477,23 @@ Get or modify current C<limit>.
 
 NOTE: After decreasing C<limit> in some case maximum of limits used while
 current C<period> may be used instead of current C<limit>.
+
+=item load
+
+    my $throttle = Sub::Throttler::Rate::EV->load($state);
+
+Create and return new instance of this algorithm.
+
+See L<Sub::Throttler::algo/"load"> for more details.
+
+=item save
+
+    my $state = $throttle->save();
+
+Return current state of algorithm needed to restore it using L</"load">
+after application restart.
+
+See L<Sub::Throttler::algo/"save"> for more details.
 
 =back
 

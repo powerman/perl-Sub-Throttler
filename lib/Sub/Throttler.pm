@@ -704,6 +704,29 @@ function/method throttling engine may call C<release_unused()> immediately
 after successful C<try_acquire()> - if it turns out some other resource
 needed for same function/method isn't available.
 
+Also, usually plugins should provide few more methods, which isn't used by
+throttling engine (so they're optional in some sense), but usually they
+needed for application which uses that algorithm:
+
+    sub new {
+        my ($class, %options) = @_;
+        # create new algorithm object
+        return $self;
+    }
+    sub load {
+        my ($class, $state) = @_;
+        # create new algorithm object using previous state from $state
+        # (which usually include both object's configuration like {limit}
+        # plus information about currently acquired resources)
+        return $self;
+    }
+    sub save {
+        my ($self) = @_;
+        # generate and return perl structure describing current
+        # object's configuration and acquired resources
+        return $state;
+    }
+
 =over
 
 =item throttle_add

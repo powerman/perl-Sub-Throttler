@@ -91,6 +91,8 @@ Sub::Throttler::algo - base class for throttling algorithms
     package Sub::Throttler::YourCustomAlgo;
     use parent qw( Sub::Throttler::algo );
     sub new { ... }
+    sub load { ... }
+    sub save { ... }
     sub acquire { ... }
     sub try_acquire { ... }
     sub release { ... }
@@ -129,6 +131,39 @@ It won't affect throttling of your functions/methods until you'll call
 L</"apply_to_functions"> or L</"apply_to_methods"> or L</"apply_to"> or
 L<Sub::Throttler/"throttle_add">. You don't have to keep returned object
 after you've configured throttling by calling these methods.
+
+=item load
+
+    my $throttle = Sub::Throttler::YourCustomAlgo->load($state);
+
+Create and return new instance of this algorithm.
+
+Parameter C<$state> is one returned by L</"save">, with details about
+object configuration and acquired resources.
+
+While processing C<$state> load() should take in account what it may be
+returned by save() from different version of this algorithm module and
+difference in time between calls to save() and load() (including time jump
+backward or reset of monotonic clock because of OS reboot).
+
+Which data is actually restored by load() depends on algorithm - in some
+cases it won't be possible to release resources acquired while previous
+run of this application (when save() was called), so it may be a bad idea
+to restore acquired state of these resources while load().
+
+=item save
+
+    my $state = $throttle->save(...);
+
+Return complex perl data structure with details about current
+configuration and acquired resources (also usually contain current version
+and time details needed for L</"load">).
+
+User is supposed to serialize returned value (for ex. into JSON format),
+save it into file/database, and use later with L</"load"> if she wanna
+keep information about used resources between application restarts (to
+protect against occasional crashes it make sense to save current state
+every few seconds/minutes).
 
 =back
 

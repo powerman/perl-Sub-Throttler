@@ -51,6 +51,22 @@ sub acquire {
     return $self;
 }
 
+sub load {
+    my ($class, $state) = @_;
+    croak 'bad state: wrong algorithm' if $state->{algo} ne __PACKAGE__;
+    my $v = version->parse($state->{version});
+    if ($v > $VERSION) {
+        carp 'restoring state saved by future version';
+    }
+    my $self = $class->new(limit=>$state->{limit}, period=>$state->{period});
+    # time jump backward, no matter how much, handled like we still is in
+    # current period, to be safe
+    if (int($state->{at}/$self->{period})*$self->{period} + $self->{period} > time) {
+        $self->{used} = $state->{used};
+    }
+    return $self;
+}
+
 sub period {
     my ($self, $period) = @_;
     if (1 == @_) {
@@ -78,6 +94,19 @@ sub release_unused {
         $self->{_t}->keepalive(0);
     }
     return $self;
+}
+
+sub save {
+    my ($self) = @_;
+    my $state = {
+        algo    => __PACKAGE__,
+        version => $VERSION->numify,
+        limit   => $self->{limit},
+        period  => $self->{period},
+        used    => $self->{used},
+        at      => time,
+    };
+    return $state;
 }
 
 sub try_acquire {
@@ -196,6 +225,23 @@ Get or modify current C<period>.
     $throttle = $throttle->limit(42);
 
 Get or modify current C<limit>.
+
+=item load
+
+    my $throttle = Sub::Throttler::Periodic::EV->load($state);
+
+Create and return new instance of this algorithm.
+
+See L<Sub::Throttler::algo/"load"> for more details.
+
+=item save
+
+    my $state = $throttle->save();
+
+Return current state of algorithm needed to restore it using L</"load">
+after application restart.
+
+See L<Sub::Throttler::algo/"save"> for more details.
 
 =back
 

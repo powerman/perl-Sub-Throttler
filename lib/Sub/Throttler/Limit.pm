@@ -51,12 +51,35 @@ sub limit {
     return $self;
 }
 
+sub load {
+    my ($class, $state) = @_;
+    croak 'bad state: wrong algorithm' if $state->{algo} ne __PACKAGE__;
+    my $v = version->parse($state->{version});
+    if ($v > $VERSION) {
+        carp 'restoring state saved by future version';
+    }
+    my $self = $class->new(limit=>$state->{limit});
+    return $self;
+}
+
 sub release {
     return _release(@_);
 }
 
 sub release_unused {
     return _release(@_);
+}
+
+sub save {
+    my ($self) = @_;
+    my $state = {
+        algo    => __PACKAGE__,
+        version => $VERSION->numify,
+        limit   => $self->{limit},
+        used    => $self->{used},
+        at      => time,
+    };
+    return $state;
 }
 
 sub try_acquire {
@@ -223,6 +246,26 @@ See L<Sub::Throttler::algo/"new"> for more details.
     $throttle = $throttle->limit(42);
 
 Get or modify current C<limit>.
+
+=item load
+
+    my $throttle = Sub::Throttler::Limit->load($state);
+
+Create and return new instance of this algorithm.
+
+Only L<limit> is restored. Information about acquired resources won't be
+restored because there is no way to release these resources later.
+
+See L<Sub::Throttler::algo/"load"> for more details.
+
+=item save
+
+    my $state = $throttle->save();
+
+Return current state of algorithm needed to restore it using L</"load">
+after application restart.
+
+See L<Sub::Throttler::algo/"save"> for more details.
 
 =back
 

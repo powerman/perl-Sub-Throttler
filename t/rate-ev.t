@@ -9,6 +9,7 @@ use Test::Exception;
 use Sub::Throttler::Rate::EV;
 
 use EV;
+use Time::HiRes qw( sleep );
 
 
 my ($throttle, $t);
@@ -377,9 +378,58 @@ is $Flush, 1;
 
 is $throttle->limit(4), $throttle;
 
+#   * при уменьшении limit() в течении period может использоваться
+#     максимальный из предыдущих limit использовавшихся в течении
+#     текущего period
+
+$throttle = Sub::Throttler::Rate::EV->new(limit => 10, period => 0.1);
+ok $throttle->try_acquire('id1','key',2),
+    'acquired 2 (2/10)';
+ok $throttle->try_acquire('id2','key',3),
+    'acquired 3 (5/10)';
+ok $throttle->try_acquire('id3','key',5),
+    'acquired 5 (10/10)';
+$throttle->limit(5);
+ok !$throttle->try_acquire('id4','key',1),
+    'failed to acquire 1 (11/5)';
+$throttle->release_unused('id1');
+$throttle->release_unused('id2');
+ok !$throttle->try_acquire('id4','key',1),
+    'failed to acquire 1 (11/5)';
+
+$throttle = Sub::Throttler::Rate::EV->new(limit => 10, period => 0.1);
+ok $throttle->try_acquire('id1','key',5),
+    'acquired 5 (5/10)';
+ok $throttle->try_acquire('id2','key',3),
+    'acquired 3 (8/10)';
+ok $throttle->try_acquire('id3','key',2),
+    'acquired 2 (10/10)';
+ok !$throttle->try_acquire('id4','key',1),
+    'failed to acquire 1 (11/10)';
+$throttle->limit(5);
+ok !$throttle->try_acquire('id4','key',1),
+    'failed to acquire 1 (11/5)';
+$throttle->release_unused('id3');
+ok $throttle->try_acquire('id3','key',2),
+    'acquired 2 (10/5)';
+$throttle->limit(2);
+ok !$throttle->try_acquire('id4','key',1),
+    'failed to acquire 1 (11/2)';
+$throttle->release_unused('id3');
+ok $throttle->try_acquire('id3','key',2),
+    'acquired 2 (10/2)';
+ok !$throttle->try_acquire('id4','key',1),
+    'failed to acquire 1 (11/2)';
+sleep 0.1;
+ok $throttle->try_acquire('id4','key',2),
+    'acquired 2 (2/2)';
+ok !$throttle->try_acquire('id5','key',1),
+    'failed to acquire 1 (3/2)';
+
 # - period
 #   * изменение period срабатывает сразу
 
+undef $throttle;
 get_flush();
 
 $t = EV::periodic 0, 0.5, 0, sub { EV::break };

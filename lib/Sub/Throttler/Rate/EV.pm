@@ -219,12 +219,6 @@ sub after {
     return;
 }
 
-# TODO документировать: после уменьшения limit в течении period может
-# продолжать использоваться предыдущий limit (при уменьшении удаляется
-# информация о части выделенных ресурсов, и новые выдаются в рамках
-# текущего limit без учёта того что в текущем period часть ресурсов уже
-# была выдана). сделать тест?
-
 sub del {
     my ($self, $time, $quantity) = @_;
     # try_acquire() guarantee $quantity > 0
@@ -423,6 +417,9 @@ Get or modify current C<period>.
     $throttle = $throttle->limit(42);
 
 Get or modify current C<limit>.
+
+NOTE: After decreasing C<limit> in some case maximum of limits used while
+current C<period> may be used instead of current C<limit>.
 
 =back
 

@@ -382,6 +382,10 @@ for acquiring again.
 It uses EV::timer, but will avoid keeping your event loop running when it
 doesn't needed anymore (if there are no acquired resources).
 
+For throttling sync subs this algorithm can be used even without event
+loop, but if you'll use huge amount of unique resource names in
+long-running application then some memory will leak.
+
 
 =head1 EXPORTS
 

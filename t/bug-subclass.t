@@ -40,7 +40,7 @@ package main;
 # Sub::Throttler doesn't handle Class methods.
 
 my $Timeout;
-push @t, EV::timer 0.1, 0, sub { $Timeout = 1 };
+push @t, EV::timer 1, 0, sub { $Timeout = 1 };
 
 Sub::Throttler::Limit->new(limit => 2)->apply_to_methods('Class');
 

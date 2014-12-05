@@ -62,11 +62,6 @@ sub period {
     return $self;
 }
 
-# TODO сделать $data=dump() и restore($data), только для Rate и Periodic,
-# restore() восстанавливает занятые ресурсы без привязывания их к id
-# (т.е. без возможности их форсировано освободить), формат $data -
-# недокументированная perl-структура (сериализация - задача юзера)
-
 sub release {
     my ($self, $id) = @_;
     croak sprintf '%s not acquired anything', $id if !$self->{acquired}{$id};

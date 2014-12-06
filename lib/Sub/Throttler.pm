@@ -199,7 +199,7 @@ sub _me {
         }
     }
     my $func = (caller 2)[CALLER_SUBROUTINE];
-    croak 'impossible to throttle anonymous function' if !exists &{$func};
+    croak 'impossible to throttle anonymous function' if !defined &{$func};
     my $code = \&{$func};
     my ($pkg, $name) = $func =~ /\A(.*)::(.*)\z/ms;
     my $is_method = eval { local $SIG{__DIE__}; $args->[0]->isa($pkg) };

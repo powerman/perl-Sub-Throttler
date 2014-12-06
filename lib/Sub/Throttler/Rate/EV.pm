@@ -34,7 +34,6 @@ sub new {
     croak 'bad param: '.(keys %opt)[0] if keys %opt;
     weaken(my $this = $self);
     $self->{_t} = EV::timer_ns 0, 0, sub { $this && $this->_tick() };
-    $self->{_t}->keepalive(0);
     return $self;
 }
 
@@ -44,7 +43,10 @@ sub acquire {
         if ($quantity <= $self->{limit}) {
             my $now = clock_gettime(CLOCK_MONOTONIC);
             my $delay = $self->{used}{$key}->get($quantity) + $self->{period} - $now;
-            sleep $delay;
+            # resource may expire between try_acquire() and clock_gettime()
+            if ($delay > 0) {
+                sleep $delay;
+            }
         }
         if (!$self->try_acquire($id, $key, $quantity)) {
             croak "$self: unable to acquire $quantity of resource '$key'";
@@ -146,6 +148,9 @@ sub release_unused {
     }
     delete $self->{acquired}{$id};
     throttle_flush();
+    if (!keys %{ $self->{used} }) {
+        $self->{_t}->stop;
+    }
     return $self;
 }
 
@@ -189,7 +194,6 @@ sub try_acquire {
 
     $self->{acquired}{$id}{$key} = [$now, $quantity];
     if (!$self->{_t}->is_active) {
-        $self->{_t}->keepalive(1);
         $self->{_t}->set($self->{period}, 0);
         $self->{_t}->start;
     }
@@ -212,9 +216,6 @@ sub _tick {
     if ($when) {
         $self->{_t}->set($when + $self->{period} - $now, 0);
         $self->{_t}->start;
-    }
-    else {
-        $self->{_t}->keepalive(0);
     }
     throttle_flush();
     return;

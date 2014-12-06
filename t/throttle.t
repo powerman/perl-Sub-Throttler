@@ -673,7 +673,30 @@ my $func = sub {
     return;
 };
 
+@Result = ();
 throws_ok { $func->() } qr/anonymous function/;
+
+SKIP: {
+    skip 'Sub::Util 1.40 not installed', 1 if !eval 'use Sub::Util 1.40 "set_subname"; 1';
+    set_subname('deanonimized', $func);
+    throws_ok { $func->() } qr/anonymous function/;
+}
+
+#   * поддержка ссылок на функции
+
+sub funcref {
+    my $done = &throttle_me || return;
+    my @p = @_;
+    push @Result, $p[0];
+    $done->();
+    return;
+};
+
+$func = \&funcref;
+lives_ok { $func->(50) };
+lives_ok { $func->(60) };
+is_deeply \@Result, [50,60],
+    'coderef';
 
 #   * если объект удаляется в то время, как его метод находится в очереди,
 #     то метод вызываться не должен и должен быть вызван его $done->()

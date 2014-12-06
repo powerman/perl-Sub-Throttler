@@ -199,32 +199,23 @@ sub _me {
         }
     }
     my $func = (caller 2)[CALLER_SUBROUTINE];
-    croak 'impossible to throttle anonymous function' if $func =~ /::__ANON__\z/ms;
+    croak 'impossible to throttle anonymous function' if !exists &{$func};
     my $code = \&{$func};
     my ($pkg, $name) = $func =~ /\A(.*)::(.*)\z/ms;
-    my $is_method = defined $args->[0] && (ref $args->[0] || $args->[0]) eq $pkg;
-    # OPTIMIZATION  Replace original sub to avoid repeating above code on
-    #               next calls to that sub.
-    ## no critic (ProhibitProlongedStrictureOverride ProhibitNoWarnings)
-    no strict 'refs';
-    no warnings 'redefine';
-    *{$func} = $is_method ? sub {
-        my ($self, @params) = @_;
+    my $is_method = eval { local $SIG{__DIE__}; $args->[0]->isa($pkg) };
+    if ($is_method) {
+        my $self = shift @{$args};
         my $done = Sub::Throttler::__done->new($self.q{->}.$name);
-        push @{$queue}, [$done, $name, $self, $code, @params];
+        push @{$queue}, [$done, $name, $self, $code, @{$args}];
         if (ref $self) {
             weaken $queue->[-1][2];
         }
-        throttle_flush();
-        return;
-    } : sub {
-        my @params = @_;
+    }
+    else {
         my $done = Sub::Throttler::__done->new($func);
-        push @{$queue}, [$done, $func, q{}, $code, @params];
-        throttle_flush();
-        return;
-    };
-    $func->(@{$args});
+        push @{$queue}, [$done, $func, q{}, $code, @{$args}];
+    }
+    throttle_flush();
     return;
 }
 

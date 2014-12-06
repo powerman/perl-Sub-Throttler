@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 0.2.0   
+	Support CODEREF for non-anonymous functions.
 	Add load(), save().
 	Rename Rate and Periodic to ::EV.
 	Replace tick()/tick_delay() with acquire().

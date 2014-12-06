@@ -5,5 +5,3 @@
   * заблокировать выполнение throttle_flush() до завершения sync sub
 - добавить throttle_it_sync()
   * сделать goto &func (для корректной работы wantarray/caller)
-
-Документировать поддержку анонимных функций через Sub::Util::set_subname.

@@ -130,7 +130,7 @@ func(10);
 # diag "now=${\clock_gettime(CLOCK_MONOTONIC)} data=[@{$throttle->{used}{key}{data}}]";
 is_deeply \@Result, [10],
     'func';
-ok 0.1 < time-$time && time-$time < 0.11,
+ok 0.08 < time-$time && time-$time < 0.11,
     'with small delay';
 func(20);
 is_deeply \@Result, [10,20],

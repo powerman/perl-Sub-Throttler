@@ -4,7 +4,7 @@
       "Alex Efros <powerman@cpan.org>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.42",
+   "generated_by" : "Module::Build version 0.4205",
    "license" : [
       "mit"
    ],
@@ -21,14 +21,17 @@
       },
       "runtime" : {
          "requires" : {
+            "AnyEvent" : "0",
             "EV" : "0",
             "Perl6::Export::Attrs" : "0",
+            "Time::HiRes" : "0",
             "perl" : "5.010001",
             "version" : "0.77"
          }
       },
       "test" : {
          "requires" : {
+            "JSON::XS" : "0",
             "Pod::Coverage" : "0.18",
             "Test::CheckManifest" : "0.9",
             "Test::Exception" : "0",
@@ -42,15 +45,26 @@
    "provides" : {
       "Sub::Throttler" : {
          "file" : "lib/Sub/Throttler.pm",
-         "version" : "v0.1.1"
+         "version" : "v0.2.0"
       },
       "Sub::Throttler::Limit" : {
          "file" : "lib/Sub/Throttler/Limit.pm",
-         "version" : "v0.1.1"
+         "version" : "v0.2.0"
       },
-      "Sub::Throttler::Rate::EV" : {
-         "file" : "lib/Sub/Throttler/Rate/EV.pm",
-         "version" : "v0.1.1"
+      "Sub::Throttler::Periodic::EV" : {
+         "file" : "lib/Sub/Throttler/Periodic/EV.pm",
+         "version" : "v0.2.0"
+      },
+      "Sub::Throttler::Rate::AnyEvent" : {
+         "file" : "lib/Sub/Throttler/Rate/AnyEvent.pm",
+         "version" : "v0.2.0"
+      },
+      "Sub::Throttler::Rate::rr" : {
+         "file" : "lib/Sub/Throttler/Rate/AnyEvent.pm"
+      },
+      "Sub::Throttler::algo" : {
+         "file" : "lib/Sub/Throttler/algo.pm",
+         "version" : "v0.2.0"
       }
    },
    "release_status" : "stable",
@@ -59,5 +73,5 @@
          "http://www.opensource.org/licenses/mit-license.php"
       ]
    },
-   "version" : "v0.1.1"
+   "version" : "v0.2.0"
 }

@@ -1,25 +1,25 @@
 Revision history for Sub-Throttler
 
-0.2.0   
-	Replace Rate::EV with Rate::AnyEvent.
+0.2.0   Sun Dec 7 09:23:28 EET 2014
+	INCOMPATIBLE API CHANGE:
+	- rename Sub::Throttler::Rate::EV to Sub::Throttler::Periodic::EV
+	- user func $target return HASHREF instead of one/two scalar/array
+	- add sync acquire()
+	- rename acquire() to try_acquire()
+	- removed used()
+	- removed :plugin export tag from Sub::Throttler
+
+	API CHANGE:
+	- period() can be modified
+	- add load()
+	- add save()
+	- add Sub::Throttler::Rate::AnyEvent
+	- add Sub::Throttler::algo
+
 	Add support for throttling sync subs.
-	Support CODEREF for non-anonymous functions.
-	Add load(), save().
-	Rename Rate and Periodic to ::EV.
-	Replace tick()/tick_delay() with acquire().
-	acquire() renamed to try_acquire().
-	Add Sub::Throttler::Rate.
-	Removed used() API.
-	Replace Sub::Throttler::Rate::EV with Sub::Throttler::Periodic
-	and Sub::Throttler::Periodic::EV.
-	Add experimental tick()/delay() API.
-	period() can be modified.
-	Add base class Sub::Throttler::algo.
-	Removed :plugin export tag from Sub::Throttler.
-	Add support for class methods in done_cb().
+	Add support for CODEREF for non-anonymous functions.
 	Add support for class methods and subclasses.
-	User func $target return HASHREF instead of 4 other ways.
-	Fix tests to be less fragile.
+	Update tests.
 
 0.1.1   Sat Jul 26 13:50:13 EEST 2014
 	Fix tests to be less fragile.

@@ -322,15 +322,66 @@ EV::run;
 is $Flush, 2,
     'resource failed to acquire: throttle_flush() not called after period';
 
-#   * watcher deactivates when all resources released
+#   * watcher deactivates only when all resources available
 
-$t = EV::timer 0.5, 0, sub { EV::break };
+$t = EV::periodic 0, 0.5, 0, sub { EV::break };
+EV::run;
+$throttle->try_acquire('id2', 'key4', 1);
+$t = EV::timer 0.01, 0, sub { EV::break };
 ok EV::run,
-    'watcher is active because resources was not released yet';
+    'watcher is active because some resources are used';
+$throttle->release_unused('id2');
+$t = EV::timer 0.01, 0, sub { EV::break };
+ok !EV::run,
+    'watcher is inactive because all resources are free';
 $throttle->release('id1');
+$t = EV::timer 0.01, 0, sub { EV::break };
+ok !EV::run,
+    'watcher is inactive because released resources expired long ago';
+$throttle->try_acquire('id2', 'key4', 1);
+$t = EV::timer 0.01, 0, sub { EV::break };
+ok EV::run,
+    'watcher is active because some resources are used';
+$throttle->release('id2');
+$t = EV::timer 0.01, 0, sub { EV::break };
+ok EV::run,
+    'watcher is active because some resources are still used, even if not acquired';
 $t = EV::timer 0.5, 0, sub { EV::break };
 ok !EV::run,
-    'watcher is inactive because there are no acquired resources';
+    'watcher is inactive because all resources are free';
+
+{
+Sub::Throttler::_reset();
+my @Result; sub func { push @Result, shift; shift->() }
+Sub::Throttler::throttle_it('func');
+$throttle->apply_to_functions();
+no warnings 'redefine';
+local *Sub::Throttler::Periodic::EV::throttle_flush = \&Sub::Throttler::throttle_flush;
+
+$t = EV::periodic 0, 0.5, 0, sub { EV::break };
+EV::run;
+func(10, sub{});
+is_deeply \@Result, [10],
+    'first func run immediately';
+func(20, sub{});
+is_deeply \@Result, [10],
+    'second func was delayed';
+$t = EV::timer 0.1, 0, sub { EV::break };
+ok EV::run,
+    'watcher is active because resources was not released yet';
+is_deeply \@Result, [10],
+    'second func is still delayed';
+$t = EV::timer 0.5, 0, sub { EV::break };
+ok EV::run,
+    'watcher is active because some resources are still used, even if not acquired';
+is_deeply \@Result, [10,20],
+    'second func was run after delay';
+$t = EV::timer 0.5, 0, sub { EV::break };
+ok !EV::run,
+    'watcher is inactive because all resources are free';
+
+Sub::Throttler::throttle_del();
+}
 
 # - limit
 #   * при увеличении limit() вызывается Sub::Throttler::throttle_flush

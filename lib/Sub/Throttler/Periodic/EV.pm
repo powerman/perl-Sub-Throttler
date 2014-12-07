@@ -82,15 +82,12 @@ sub release {
     my ($self, $id) = @_;
     croak sprintf '%s not acquired anything', $id if !$self->{acquired}{$id};
     delete $self->{acquired}{$id};
-    if (!keys %{ $self->{acquired} }) {
-        $self->{_t}->keepalive(0);
-    }
     return $self;
 }
 
 sub release_unused {
     my $self = shift->SUPER::release_unused(@_);
-    if (!keys %{ $self->{acquired} }) {
+    if (!keys %{ $self->{used} }) {
         $self->{_t}->keepalive(0);
     }
     return $self;
@@ -130,6 +127,9 @@ sub _tick {
     if (keys %{ $self->{used} }) {
         $self->{used} = {};
         throttle_flush();
+    }
+    if (!keys %{ $self->{used} }) {
+        $self->{_t}->keepalive(0);
     }
     return;
 }

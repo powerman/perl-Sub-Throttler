@@ -64,6 +64,9 @@ sub load {
     if (int($state->{at}/$self->{period})*$self->{period} + $self->{period} > time) {
         $self->{used} = $state->{used};
     }
+    if (keys %{ $self->{used} }) {
+        $self->{_t}->keepalive(1);
+    }
     return $self;
 }
 

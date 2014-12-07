@@ -102,6 +102,7 @@ sub load {
     for (values %{ $self->{used} }) {
         bless $_, 'Sub::Throttler::Rate::rr';
     }
+    $self->{_t} = AE::timer 0, 0, $self->{_cb};
     return $self;
 }
 

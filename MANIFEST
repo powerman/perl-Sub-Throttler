@@ -25,4 +25,5 @@ t/pod-coverage.t
 t/pod.t
 t/rate-ev.t
 t/saveload.t
+t/throttle-sync.t
 t/throttle.t

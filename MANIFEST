@@ -4,7 +4,7 @@ lib/Sub/Throttler.pm
 lib/Sub/Throttler/algo.pm
 lib/Sub/Throttler/Limit.pm
 lib/Sub/Throttler/Periodic/EV.pm
-lib/Sub/Throttler/Rate/EV.pm
+lib/Sub/Throttler/Rate/AnyEvent.pm
 MANIFEST			This list of files
 META.json
 META.yml
@@ -23,7 +23,7 @@ t/periodic-ev.t
 t/perlcritic.t
 t/pod-coverage.t
 t/pod.t
-t/rate-ev.t
+t/rate-anyevent.t
 t/saveload.t
 t/throttle-sync.t
 t/throttle.t

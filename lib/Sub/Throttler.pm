@@ -375,14 +375,14 @@ Sub::Throttler - Rate limit sync and async function calls
     
     # Load throttling algorithms
     use Sub::Throttler::Limit;
-    use Sub::Throttler::Rate::EV;
+    use Sub::Throttler::Rate::AnyEvent;
     use Sub::Throttler::Periodic::EV;
     
     # Configure throttling algorithms
     my $throttle_parallel_requests
         = Sub::Throttler::Limit->new(limit => 5);
     my $throttle_request_rate
-        = Sub::Throttler::Rate::EV->new(period => 0.1, limit => 10);
+        = Sub::Throttler::Rate::AnyEvent->new(period => 0.1, limit => 10);
     
     # Apply configured limits to selected functions/methods with
     # throttling support
@@ -398,7 +398,7 @@ need.
 
 You can use core features of this framework with usual sync application or
 with application based on any event loop, but some throttling algorithms
-may require specific event loop (like L<Sub::Throttler::Rate::EV>).
+may require specific event loop (like L<Sub::Throttler::Periodic::EV>).
 
 The L</"SYNOPSIS"> shows basic usage example, but there are a lot of
 advanced features: define which and how many resources each
@@ -426,12 +426,12 @@ L<Sub::Throttler::Limit> implement algorithm to throttle based on quantity
 of used resources/limits. For example, it will let you limit an amount of
 simultaneous tasks.
 
-L<Sub::Throttler::Rate::EV> implement algorithm to throttle based on rate
+L<Sub::Throttler::Rate::AnyEvent> implement algorithm to throttle based on rate
 (quantity of used resources/limits per some period of time). For example,
 it will let you control maximum calls/sec and burst rate (by choosing
 between "1000 calls per 1 second" and "10 calls per 0.01 second" limits).
 
-L<Sub::Throttler::Periodic::EV> is similar to L<Sub::Throttler::Rate::EV>,
+L<Sub::Throttler::Periodic::EV> is similar to L<Sub::Throttler::Rate::AnyEvent>,
 but it treat "period" differently, using absolute wall-clock time instead
 of relative time (for ex. if period is set to 1 hour then it begins at
 00m00s and ends at 59m59s of every hour).
@@ -487,7 +487,7 @@ user's callback when done and don't return anything useful when started.
 Sync function/method will be delayed by calling sleep() if some resources
 it needs isn't available yet. Of course, this will work only with
 algorithms which automatically release some resources as time passes
-(like L<Sub::Throttler::Rate::EV> or L<Sub::Throttler::Periodic::EV>).
+(like L<Sub::Throttler::Rate::AnyEvent> or L<Sub::Throttler::Periodic::EV>).
 In all other cases - used algorithm doesn't release resources with time
 (like L<Sub::Throttler::Limit>) or needed amount of resources is over
 algorithm's maximal limit - it doesn't make sense to sleep() and thus

@@ -9,7 +9,7 @@ use Time::HiRes qw( time sleep clock_gettime CLOCK_MONOTONIC );
 
 use Sub::Throttler qw( :ALL );
 use Sub::Throttler::Limit;
-use Sub::Throttler::Rate::EV;
+use Sub::Throttler::Rate::AnyEvent;
 
 my (@Result, $time);
 my ($throttle, $throttle2);
@@ -61,7 +61,7 @@ is_deeply \@Result, [10,30],
 
 #   * один add() - ограничения есть
 
-$throttle = Sub::Throttler::Rate::EV->new(period=>0.1)->apply_to(sub {
+$throttle = Sub::Throttler::Rate::AnyEvent->new(period=>0.1)->apply_to(sub {
     return { key => 1 };
 });
 
@@ -81,7 +81,7 @@ sleep 0.1;
 
 #   * несколько add() - учитываются все ограничения
 
-$throttle2 = Sub::Throttler::Rate::EV->new(period=>0.5,limit=>2)->apply_to(sub {
+$throttle2 = Sub::Throttler::Rate::AnyEvent->new(period=>0.5,limit=>2)->apply_to(sub {
     my ($this, $name, @p) = @_;
     if (!$this) {
         return { key => 1 };
@@ -147,7 +147,7 @@ ok 0.3 < time-$time && time-$time < 0.31,
 #     - $target-функции каждого add() срабатывают на разные цели
 
 throttle_del();
-$throttle = Sub::Throttler::Rate::EV->new(period=>0.1)
+$throttle = Sub::Throttler::Rate::AnyEvent->new(period=>0.1)
     ->apply_to_functions('func')
     ->apply_to_methods(ref $obj, 'method')
     ;
@@ -628,7 +628,7 @@ is_deeply \@Result, [20,'flush'],
 #       зашейперённые функции/методы
 
 throttle_del();
-$throttle = Sub::Throttler::Rate::EV->new(limit=>2);
+$throttle = Sub::Throttler::Rate::AnyEvent->new(limit=>2);
 throttle_add($throttle, sub {
     return { key => 1 };
 });

@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 0.2.0   
+	Replace Rate::EV with Rate::AnyEvent.
 	Add support for throttling sync subs.
 	Support CODEREF for non-anonymous functions.
 	Add load(), save().

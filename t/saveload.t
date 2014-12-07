@@ -10,7 +10,7 @@ use Time::HiRes qw( sleep );
 
 use Sub::Throttler::Limit;
 use Sub::Throttler::Periodic::EV;
-use Sub::Throttler::Rate::EV;
+use Sub::Throttler::Rate::AnyEvent;
 
 
 my ($throttle, $state);
@@ -69,15 +69,15 @@ like get_warn(), qr/future/ms;
 $state = Sub::Throttler::Limit->new()->save();
 throws_ok { Sub::Throttler::Periodic::EV->load($state) } qr/algorithm/;
 
-# - Sub::Throttler::Rate::EV
+# - Sub::Throttler::Rate::AnyEvent
 
-$throttle = Sub::Throttler::Rate::EV->new(limit => 3, period => 0.2);
+$throttle = Sub::Throttler::Rate::AnyEvent->new(limit => 3, period => 0.2);
 ok $throttle->try_acquire('id1','key',1);
 throws_ok { $throttle->try_acquire('id1','key',100) } qr/already/;
 sleep 0.1;
 ok $throttle->try_acquire('id2','key',2);
 $state = $throttle->save();
-$throttle = Sub::Throttler::Rate::EV->load(decode_json(encode_json($state)));
+$throttle = Sub::Throttler::Rate::AnyEvent->load(decode_json(encode_json($state)));
 is $throttle->limit, 3,
     'limit restored';
 is $throttle->period, 0.2,
@@ -92,7 +92,7 @@ ok $throttle->try_acquire('id1','key',1),
     'time when resource was acquired is restored';
 
 sleep 0.1;
-$throttle = Sub::Throttler::Rate::EV->load($state);
+$throttle = Sub::Throttler::Rate::AnyEvent->load($state);
 my $now = Time::HiRes::clock_gettime(Time::HiRes::CLOCK_MONOTONIC);
 ok $throttle->try_acquire('id1','key',3),
     'used resources not restored after period';
@@ -105,17 +105,17 @@ for my $data (map {$_->{data}} values %{ $state->{used} }) {
         }
     }
 }
-$throttle = Sub::Throttler::Rate::EV->load($state);
+$throttle = Sub::Throttler::Rate::AnyEvent->load($state);
 ok !$throttle->try_acquire('id1','key',3),
     'used resources restored for time jump backward';
 
 wait_err();
 $state->{version}++;
-$throttle = Sub::Throttler::Rate::EV->load($state);
+$throttle = Sub::Throttler::Rate::AnyEvent->load($state);
 like get_warn(), qr/future/ms;
 
 $state = Sub::Throttler::Limit->new()->save();
-throws_ok { Sub::Throttler::Rate::EV->load($state) } qr/algorithm/;
+throws_ok { Sub::Throttler::Rate::AnyEvent->load($state) } qr/algorithm/;
 
 
 done_testing();

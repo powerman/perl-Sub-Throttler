@@ -1,4 +1,4 @@
-package Sub::Throttler::Rate::EV;
+package Sub::Throttler::Rate::AnyEvent;
 
 use warnings;
 use strict;
@@ -16,7 +16,7 @@ use Time::HiRes qw( clock_gettime CLOCK_MONOTONIC time sleep );
 use List::Util qw( min );
 use Scalar::Util qw( weaken );
 use Storable qw( dclone );
-use EV;
+use AnyEvent;
 
 
 sub new {
@@ -25,15 +25,17 @@ sub new {
     my $self = bless {
         limit   => delete $opt{limit} // 1,
         period  => delete $opt{period} // 1,
-        acquired=> {},  # { $id => { $key => [$time, $quantity], … }, … }
-        used    => {},  # { $key => { next => $idx, data => [ $time, … ] }, … }
+        acquired=> {},      # { $id => { $key => [$time, $quantity], … }, … }
+        used    => {},      # { $key => { next => $idx, data => [ $time, … ] }, … }
+        _cb     => undef,   # callback for timer
+        _t      => undef,   # undef or AE::timer
         }, ref $class || $class;
     croak 'limit must be an unsigned integer' if $self->{limit} !~ /\A\d+\z/ms;
     croak 'period must be a positive number' if $self->{period} <= 0;
     croak 'period is too large' if $self->{period} >= -Sub::Throttler::Rate::rr::EMPTY();
     croak 'bad param: '.(keys %opt)[0] if keys %opt;
     weaken(my $this = $self);
-    $self->{_t} = EV::timer_ns 0, 0, sub { $this && $this->_tick() };
+    $self->{_cb} = sub { $this && $this->_tick() };
     return $self;
 }
 
@@ -115,8 +117,8 @@ sub period {
     my $resources_increases = $self->{period} > $period;
     $self->{period} = $period;
     if ($resources_increases) {
-        if ($self->{_t}->is_active) {
-            $self->{_t}->stop;
+        if ($self->{_t}) {
+            $self->{_t} = undef;
             $self->_tick();
         }
         else {
@@ -149,7 +151,7 @@ sub release_unused {
     delete $self->{acquired}{$id};
     throttle_flush();
     if (!keys %{ $self->{used} }) {
-        $self->{_t}->stop;
+        $self->{_t} = undef;
     }
     return $self;
 }
@@ -193,9 +195,8 @@ sub try_acquire {
     }
 
     $self->{acquired}{$id}{$key} = [$now, $quantity];
-    if (!$self->{_t}->is_active) {
-        $self->{_t}->set($self->{period}, 0);
-        $self->{_t}->start;
+    if (!$self->{_t}) {
+        $self->{_t} = AE::timer $self->{period}, 0, $self->{_cb};
     }
     return 1;
 }
@@ -213,10 +214,7 @@ sub _tick {
             $when = $after;
         }
     }
-    if ($when) {
-        $self->{_t}->set($when + $self->{period} - $now, 0);
-        $self->{_t}->start;
-    }
+    $self->{_t} = !$when ? undef : AE::timer $when + $self->{period} - $now, 0, $self->{_cb};
     throttle_flush();
     return;
 }
@@ -388,15 +386,15 @@ __END__
 
 =head1 NAME
 
-Sub::Throttler::Rate::EV - throttle by rate (quantity per time)
+Sub::Throttler::Rate::AnyEvent - throttle by rate (quantity per time)
 
 
 =head1 SYNOPSIS
 
-    use Sub::Throttler::Rate::EV;
+    use Sub::Throttler::Rate::AnyEvent;
     
     # default limit=1, period=1
-    my $throttle = Sub::Throttler::Rate::EV->new(period => 0.1, limit => 42);
+    my $throttle = Sub::Throttler::Rate::AnyEvent->new(period => 0.1, limit => 42);
     
     my $limit = $throttle->limit;
     $throttle->limit(42);
@@ -446,15 +444,15 @@ Nothing.
 
 =head1 INTERFACE
 
-L<Sub::Throttler::Rate::EV> inherits all methods from L<Sub::Throttler::algo>
+L<Sub::Throttler::Rate::AnyEvent> inherits all methods from L<Sub::Throttler::algo>
 and implements the following ones.
 
 =over
 
 =item new
 
-    my $throttle = Sub::Throttler::Rate::EV->new;
-    my $throttle = Sub::Throttler::Rate::EV->new(period => 0.1, limit => 42);
+    my $throttle = Sub::Throttler::Rate::AnyEvent->new;
+    my $throttle = Sub::Throttler::Rate::AnyEvent->new(period => 0.1, limit => 42);
 
 Create and return new instance of this algorithm.
 
@@ -481,7 +479,7 @@ current C<period> may be used instead of current C<limit>.
 
 =item load
 
-    my $throttle = Sub::Throttler::Rate::EV->load($state);
+    my $throttle = Sub::Throttler::Rate::AnyEvent->load($state);
 
 Create and return new instance of this algorithm.
 

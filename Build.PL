@@ -30,6 +30,7 @@ my $builder = $class->new(
         'version'               => '0.77',
         'Perl6::Export::Attrs'  => 0,
         'EV'                    => 0,
+        'AnyEvent'              => 0,
         'Time::HiRes'           => 0,
     },
     test_requires => {

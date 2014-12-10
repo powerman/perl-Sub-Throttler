@@ -106,7 +106,7 @@ Sub::Throttler::algo - base class for throttling algorithms
 
 This is a base class useful for implementing throttling algorithm plugins
 for L<Sub::Throttler>. For more details check
-L<Sub::Throttler::Limit/"Implementing throttle algorithms/plugins">.
+L<Sub::Throttler/"Implementing throttle algorithms/plugins">.
 
 
 =head1 EXPORTS
@@ -115,6 +115,14 @@ Nothing.
 
 
 =head1 INTERFACE
+
+=head2 Management of throttle object
+
+All methods listed in this section isn't implemented in
+L<Sub::Throttler::algo>, but they usually should be provided by algorithm
+module inherited from this base class. They isn't required by throttling
+engine so your algorithm may choose to not implement them, but they
+usually needed for user so it's good idea to provide them.
 
 =over
 
@@ -125,7 +133,7 @@ Nothing.
 Create and return new instance of this algorithm.
 
 Supported params depends on concrete algorithm, for example see
-L<Sub::Throttler::Limit/"new">, L<Sub::Throttler::Periodic/"new">.
+L<Sub::Throttler::Limit/"new">, L<Sub::Throttler::Periodic::EV/"new">.
 
 It won't affect throttling of your functions/methods until you'll call
 L</"apply_to_functions"> or L</"apply_to_methods"> or L</"apply_to"> or
@@ -168,6 +176,8 @@ every few seconds/minutes).
 =back
 
 =head2 Activate throttle for selected subrouties
+
+Methods listed in this section are implemented in L<Sub::Throttler::algo>.
 
 =over
 

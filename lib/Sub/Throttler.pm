@@ -637,7 +637,7 @@ string C<eval> instead of C<< *Some::func = sub { 'wrapper' }; >> here
     # Example wrapper for sync function/method which can be called in any
     # context, don't affect call stack and release resources when start.
     # Also let's use Sub::Util to avoid string eval.
-    use Sub::Util qw( set_subname );
+    use Sub::Util 1.40 qw( set_subname );
     my $orig_sub = \&Some::sub;
     no warnings 'redefine';
     *Some::sub = set_subname 'Some::sub', sub {

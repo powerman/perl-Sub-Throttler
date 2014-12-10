@@ -430,7 +430,7 @@ This algorithm works like L<Sub::Throttler::Limit> with one difference:
 resources acquired earlier than given period value will be made available
 for acquiring again.
 
-It uses EV::timer, but will avoid keeping your event loop running when it
+It uses AE::timer, but will avoid keeping your event loop running when it
 doesn't needed anymore (if there are no acquired resources).
 
 For throttling sync subs this algorithm can be used even without event
@@ -476,7 +476,7 @@ Get or modify current C<period>.
 Get or modify current C<limit>.
 
 NOTE: After decreasing C<limit> in some case maximum of limits used while
-current C<period> may be used instead of current C<limit>.
+current C<period> may be used instead of current C<limit> for next C<period>.
 
 =item load
 

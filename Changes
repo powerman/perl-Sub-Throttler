@@ -1,5 +1,8 @@
 Revision history for Sub-Throttler
 
+0.2.1   
+	Fix doc.
+
 0.2.0   Sun Dec 7 09:23:28 EET 2014
 	INCOMPATIBLE API CHANGE:
 	- rename Sub::Throttler::Rate::EV to Sub::Throttler::Periodic::EV

@@ -23,7 +23,7 @@ my $builder = $class->new(
     dist_version_from   => 'lib/Sub/Throttler.pm',
     release_status      => 'stable',
     configure_requires => {
-        'Module::Build'         => 0,
+        'Module::Build'         => 0.4004, # for test_requires
     },
     requires => {
         'perl'                  => 5.010001,

@@ -6,7 +6,7 @@ use utf8;
 use feature ':5.10';
 use Carp;
 
-use version; our $VERSION = qv('0.2.0');    # REMINDER: update Changes
+use version; our $VERSION = qv('0.2.1');    # REMINDER: update Changes
 
 # REMINDER: update dependencies in Build.PL
 use Perl6::Export::Attrs;
@@ -973,7 +973,7 @@ Alex Efros  C<< <powerman@cpan.org> >>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2014 Alex Efros <powerman@cpan.org>.
+Copyright 2014-2015 Alex Efros <powerman@cpan.org>.
 
 This program is distributed under the MIT (X11) License:
 L<http://www.opensource.org/licenses/mit-license.php>

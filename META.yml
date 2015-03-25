@@ -12,9 +12,9 @@ build_requires:
   Test::Pod: '1.22'
   Test::Pod::Coverage: '1.08'
 configure_requires:
-  Module::Build: '0'
+  Module::Build: '0.4004'
 dynamic_config: 1
-generated_by: 'Module::Build version 0.4205, CPAN::Meta::Converter version 2.140640'
+generated_by: 'Module::Build version 0.4211, CPAN::Meta::Converter version 2.150001'
 license: mit
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -23,21 +23,21 @@ name: Sub-Throttler
 provides:
   Sub::Throttler:
     file: lib/Sub/Throttler.pm
-    version: v0.2.0
+    version: v0.2.1
   Sub::Throttler::Limit:
     file: lib/Sub/Throttler/Limit.pm
-    version: v0.2.0
+    version: v0.2.1
   Sub::Throttler::Periodic::EV:
     file: lib/Sub/Throttler/Periodic/EV.pm
-    version: v0.2.0
+    version: v0.2.1
   Sub::Throttler::Rate::AnyEvent:
     file: lib/Sub/Throttler/Rate/AnyEvent.pm
-    version: v0.2.0
+    version: v0.2.1
   Sub::Throttler::Rate::rr:
     file: lib/Sub/Throttler/Rate/AnyEvent.pm
   Sub::Throttler::algo:
     file: lib/Sub/Throttler/algo.pm
-    version: v0.2.0
+    version: v0.2.1
 requires:
   AnyEvent: '0'
   EV: '0'
@@ -47,4 +47,4 @@ requires:
   version: '0.77'
 resources:
   license: http://www.opensource.org/licenses/mit-license.php
-version: v0.2.0
+version: v0.2.1

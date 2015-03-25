@@ -4,7 +4,7 @@
       "Alex Efros <powerman@cpan.org>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4205",
+   "generated_by" : "Module::Build version 0.4211",
    "license" : [
       "mit"
    ],
@@ -16,7 +16,7 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "Module::Build" : "0"
+            "Module::Build" : "0.4004"
          }
       },
       "runtime" : {
@@ -45,26 +45,26 @@
    "provides" : {
       "Sub::Throttler" : {
          "file" : "lib/Sub/Throttler.pm",
-         "version" : "v0.2.0"
+         "version" : "v0.2.1"
       },
       "Sub::Throttler::Limit" : {
          "file" : "lib/Sub/Throttler/Limit.pm",
-         "version" : "v0.2.0"
+         "version" : "v0.2.1"
       },
       "Sub::Throttler::Periodic::EV" : {
          "file" : "lib/Sub/Throttler/Periodic/EV.pm",
-         "version" : "v0.2.0"
+         "version" : "v0.2.1"
       },
       "Sub::Throttler::Rate::AnyEvent" : {
          "file" : "lib/Sub/Throttler/Rate/AnyEvent.pm",
-         "version" : "v0.2.0"
+         "version" : "v0.2.1"
       },
       "Sub::Throttler::Rate::rr" : {
          "file" : "lib/Sub/Throttler/Rate/AnyEvent.pm"
       },
       "Sub::Throttler::algo" : {
          "file" : "lib/Sub/Throttler/algo.pm",
-         "version" : "v0.2.0"
+         "version" : "v0.2.1"
       }
    },
    "release_status" : "stable",
@@ -73,5 +73,5 @@
          "http://www.opensource.org/licenses/mit-license.php"
       ]
    },
-   "version" : "v0.2.0"
+   "version" : "v0.2.1"
 }

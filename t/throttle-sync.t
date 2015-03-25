@@ -70,12 +70,12 @@ $time = time;
 func(10);
 is_deeply \@Result, [10],
     'func';
-ok time-$time < 0.01,
+ok time-$time < 0.05,
     'no delay';
 $obj->method(30);
 is_deeply \@Result, [10,30],
     'method';
-ok 0.1 < time-$time && time-$time < 0.11,
+ok 0.1 < time-$time && time-$time < 0.15,
     'with delay';
 sleep 0.1;
 
@@ -95,27 +95,27 @@ $time = time;
 func(10);
 is_deeply \@Result, [10],
     'func';
-ok time-$time < 0.01,
+ok time-$time < 0.05,
     'no delay';
 func(20);
 is_deeply \@Result, [10,20],
     'func';
-ok 0.1 < time-$time && time-$time < 0.11,
+ok 0.1 < time-$time && time-$time < 0.15,
     'with small delay';
 $obj->method(30);
 is_deeply \@Result, [10,20,30],
     'method';
-ok 0.2 < time-$time && time-$time < 0.21,
+ok 0.2 < time-$time && time-$time < 0.25,
     'with small delay';
 func(40);
 is_deeply \@Result, [10,20,30,40],
     'func';
-ok 0.5 < time-$time && time-$time < 0.51,
+ok 0.5 < time-$time && time-$time < 0.55,
     'with long delay';
 func(50);
 is_deeply \@Result, [10,20,30,40,50],
     'func';
-ok 0.6 < time-$time && time-$time < 0.61,
+ok 0.6 < time-$time && time-$time < 0.65,
     'with small delay';
 
 #   * del($throttle2)
@@ -130,17 +130,17 @@ func(10);
 # diag "now=${\clock_gettime(CLOCK_MONOTONIC)} data=[@{$throttle->{used}{key}{data}}]";
 is_deeply \@Result, [10],
     'func';
-ok 0.08 < time-$time && time-$time < 0.11,
+ok 0.07 < time-$time && time-$time < 0.13,
     'with small delay';
 func(20);
 is_deeply \@Result, [10,20],
     'func';
-ok 0.2 < time-$time && time-$time < 0.21,
+ok 0.2 < time-$time && time-$time < 0.25,
     'with small delay';
 func(30);
 is_deeply \@Result, [10,20,30],
     'func';
-ok 0.3 < time-$time && time-$time < 0.31,
+ok 0.3 < time-$time && time-$time < 0.35,
     'with small delay';
 
 #   * несколько add() с одинаковым объектом $throttle:
@@ -157,17 +157,17 @@ $time = time;
 func(10);
 is_deeply \@Result, [10],
     'func';
-ok time-$time < 0.01,
+ok time-$time < 0.05,
     'no delay';
 $obj->method(20);
 is_deeply \@Result, [10,20],
     'method';
-ok 0.1 < time-$time && time-$time < 0.11,
+ok 0.1 < time-$time && time-$time < 0.15,
     'with small delay';
 func(30);
 is_deeply \@Result, [10,20,30],
     'func';
-ok 0.2 < time-$time && time-$time < 0.21,
+ok 0.2 < time-$time && time-$time < 0.25,
     'with small delay';
 
 #     - $target-функции каждого add() срабатывают на одинаковые цели с разными $key
@@ -638,7 +638,7 @@ $time = time;
 top_func(10);
 is_deeply \@Result, ['top_func',10],
     'top_func, func';
-ok time-$time < 0.01,
+ok time-$time < 0.05,
     'no delay';
 
 

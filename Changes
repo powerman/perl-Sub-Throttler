@@ -2,6 +2,10 @@ Revision history for Sub-Throttler
 
 {{$NEXT}}
 
+v0.2.2  2015-03-30 01:12:40 EEST
+	- Convert to Dist::Milla.
+	- Fix tests portability.
+
 v0.2.1  2015-03-25 03:36:24 EET
 	- Fix doc.
 	- Fix dependencies.

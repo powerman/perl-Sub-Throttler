@@ -7,7 +7,7 @@ Sub::Throttler - Rate limit sync and async function calls
 
 # VERSION
 
-This document describes Sub::Throttler version v0.2.1
+This document describes Sub::Throttler version v0.2.2
 
 # SYNOPSIS
 

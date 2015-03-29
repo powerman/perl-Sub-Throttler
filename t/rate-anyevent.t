@@ -11,6 +11,9 @@ use EV;
 use Time::HiRes qw( sleep );
 
 
+plan skip_all => 'Too many broken cpan tester setups.' if $ENV{AUTOMATED_TESTING};
+
+
 my ($throttle, $t);
 
 my $Flush = 0;

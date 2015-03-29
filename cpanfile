@@ -14,6 +14,7 @@ on configure => sub {
 };
 
 on test => sub {
+    requires 'Devel::CheckOS';
     requires 'JSON::XS';
     requires 'Test::Exception';
     requires 'Test::More', '0.96';

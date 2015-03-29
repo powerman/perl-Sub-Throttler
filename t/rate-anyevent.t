@@ -4,11 +4,15 @@ use utf8;
 use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
-
-use Sub::Throttler::Rate::AnyEvent;
-
+use Devel::CheckOS qw(os_is);
 use EV;
 use Time::HiRes qw( sleep );
+
+BEGIN {
+    plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MicrosoftWindows');
+    plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MacOSX');
+}
+use Sub::Throttler::Rate::AnyEvent;
 
 
 plan skip_all => 'Too many broken cpan tester setups.' if $ENV{AUTOMATED_TESTING};

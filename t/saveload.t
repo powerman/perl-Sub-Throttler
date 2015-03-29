@@ -4,9 +4,14 @@ use utf8;
 use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
+use Devel::CheckOS qw(os_is);
 use JSON::XS;
 use Time::HiRes qw( sleep );
 
+BEGIN {
+    plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MicrosoftWindows');
+    plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MacOSX');
+}
 use Sub::Throttler::Limit;
 use Sub::Throttler::Periodic::EV;
 use Sub::Throttler::Rate::AnyEvent;

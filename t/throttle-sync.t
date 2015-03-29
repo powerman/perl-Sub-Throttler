@@ -4,11 +4,17 @@ use utf8;
 use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
+use Devel::CheckOS qw(os_is);
 use Time::HiRes qw( time sleep clock_gettime CLOCK_MONOTONIC );
 
+BEGIN {
+    plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MicrosoftWindows');
+    plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MacOSX');
+}
 use Sub::Throttler qw( :ALL );
 use Sub::Throttler::Limit;
 use Sub::Throttler::Rate::AnyEvent;
+
 
 my (@Result, $time);
 my ($throttle, $throttle2);

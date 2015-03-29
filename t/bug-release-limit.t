@@ -28,7 +28,7 @@ sub func {
 # of used resources was lower than ->limit
 
 my $Timeout;
-push @t, EV::timer 0.1, 0, sub { $Timeout = 1 };
+push @t, EV::timer 0.3, 0, sub { $Timeout = 1 };
 
 throttle_add(Sub::Throttler::Limit->new(limit => 3), sub {
     my ($type, $name, @params) = @_;

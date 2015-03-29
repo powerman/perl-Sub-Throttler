@@ -1,7 +1,6 @@
 use strict;
 use warnings;
 use utf8;
-use feature ':5.10';
 use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;

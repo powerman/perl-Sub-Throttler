@@ -3,8 +3,8 @@
    "author" : [
       "Alex Efros <powerman@cpan.org>"
    ],
-   "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4211",
+   "dynamic_config" : 0,
+   "generated_by" : "Dist::Zilla version 5.034, Dist::Milla version v1.0.14, CPAN::Meta::Converter version 2.150001",
    "license" : [
       "mit"
    ],
@@ -13,18 +13,38 @@
       "version" : "2"
    },
    "name" : "Sub-Throttler",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "xt",
+         "inc",
+         "share",
+         "eg",
+         "examples"
+      ]
+   },
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "Module::Build" : "0.4004"
+            "Module::Build::Tiny" : "0.039"
+         }
+      },
+      "develop" : {
+         "requires" : {
+            "Dist::Milla" : "v1.0.14",
+            "Test::Perl::Critic" : "0",
+            "Test::Pod" : "1.41"
          }
       },
       "runtime" : {
          "requires" : {
             "AnyEvent" : "0",
             "EV" : "0",
+            "List::Util" : "1.33",
             "Perl6::Export::Attrs" : "0",
+            "Scalar::Util" : "0",
             "Time::HiRes" : "0",
+            "parent" : "0",
             "perl" : "5.010001",
             "version" : "0.77"
          }
@@ -32,13 +52,8 @@
       "test" : {
          "requires" : {
             "JSON::XS" : "0",
-            "Pod::Coverage" : "0.18",
-            "Test::CheckManifest" : "0.9",
             "Test::Exception" : "0",
-            "Test::More" : "0",
-            "Test::Perl::Critic" : "0",
-            "Test::Pod" : "1.22",
-            "Test::Pod::Coverage" : "1.08"
+            "Test::More" : "0.96"
          }
       }
    },
@@ -60,7 +75,8 @@
          "version" : "v0.2.1"
       },
       "Sub::Throttler::Rate::rr" : {
-         "file" : "lib/Sub/Throttler/Rate/AnyEvent.pm"
+         "file" : "lib/Sub/Throttler/Rate/AnyEvent.pm",
+         "version" : "v0.2.1"
       },
       "Sub::Throttler::algo" : {
          "file" : "lib/Sub/Throttler/algo.pm",
@@ -69,9 +85,16 @@
    },
    "release_status" : "stable",
    "resources" : {
-      "license" : [
-         "http://www.opensource.org/licenses/mit-license.php"
-      ]
+      "bugtracker" : {
+         "web" : "https://github.com/powerman/perl-Sub-Throttler/issues"
+      },
+      "homepage" : "https://github.com/powerman/perl-Sub-Throttler",
+      "repository" : {
+         "type" : "git",
+         "url" : "https://github.com/powerman/perl-Sub-Throttler.git",
+         "web" : "https://github.com/powerman/perl-Sub-Throttler"
+      }
    },
    "version" : "v0.2.1"
 }
+

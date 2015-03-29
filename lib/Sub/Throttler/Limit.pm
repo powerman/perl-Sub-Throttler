@@ -1,15 +1,13 @@
 package Sub::Throttler::Limit;
-
+use 5.010001;
 use warnings;
 use strict;
 use utf8;
-use feature ':5.10';
 use Carp;
 our @CARP_NOT = qw( Sub::Throttler );
 
-use version; our $VERSION = qv('0.2.1');    # REMINDER: update Changes
+our $VERSION = 'v0.2.1';
 
-# REMINDER: update dependencies in Build.PL
 use parent qw( Sub::Throttler::algo );
 use Sub::Throttler qw( throttle_flush );
 
@@ -74,7 +72,7 @@ sub save {
     my ($self) = @_;
     my $state = {
         algo    => __PACKAGE__,
-        version => $VERSION->numify,
+        version => version->declare($VERSION)->numify,
         limit   => $self->{limit},
         used    => $self->{used},
         at      => time,
@@ -124,6 +122,11 @@ __END__
 =head1 NAME
 
 Sub::Throttler::Limit - throttle by quantity
+
+
+=head1 VERSION
+
+This document describes Sub::Throttler::Limit version v0.2.1
 
 
 =head1 SYNOPSIS
@@ -270,71 +273,63 @@ See L<Sub::Throttler::algo/"save"> for more details.
 =back
 
 
-=head1 BUGS AND LIMITATIONS
-
-No bugs have been reported.
-
-
 =head1 SUPPORT
 
-Please report any bugs or feature requests through the web interface at
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Sub-Throttler>.
-I will be notified, and then you'll automatically be notified of progress
-on your bug as I make changes.
+=head2 Bugs / Feature Requests
 
-You can also look for information at:
+Please report any bugs or feature requests through the issue tracker
+at L<https://github.com/powerman/perl-Sub-Throttler/issues>.
+You will be notified automatically of any progress on your issue.
+
+=head2 Source Code
+
+This is open source software. The code repository is available for
+public review and contribution under the terms of the license.
+Feel free to fork the repository and submit pull requests.
+
+L<https://github.com/powerman/perl-Sub-Throttler>
+
+    git clone https://github.com/powerman/perl-Sub-Throttler.git
+
+=head2 Resources
 
 =over
 
-=item * RT: CPAN's request tracker
+=item * MetaCPAN Search
 
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Sub-Throttler>
+L<https://metacpan.org/search?q=Sub-Throttler>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/dist/Sub-Throttler>
 
 =item * AnnoCPAN: Annotated CPAN documentation
 
 L<http://annocpan.org/dist/Sub-Throttler>
 
-=item * CPAN Ratings
+=item * CPAN Testers Matrix
 
-L<http://cpanratings.perl.org/d/Sub-Throttler>
+L<http://matrix.cpantesters.org/?dist=Sub-Throttler>
 
-=item * Search CPAN
+=item * CPANTS: A CPAN Testing Service (Kwalitee)
 
-L<http://search.cpan.org/dist/Sub-Throttler/>
+L<http://cpants.cpanauthors.org/dist/Sub-Throttler>
 
 =back
 
 
 =head1 AUTHOR
 
-Alex Efros  C<< <powerman@cpan.org> >>
+Alex Efros E<lt>powerman@cpan.orgE<gt>
 
 
-=head1 LICENSE AND COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright 2014-2015 Alex Efros <powerman@cpan.org>.
+This software is Copyright (c) 2014-2015 by Alex Efros E<lt>powerman@cpan.orgE<gt>.
 
-This program is distributed under the MIT (X11) License:
-L<http://www.opensource.org/licenses/mit-license.php>
+This is free software, licensed under:
 
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the "Software"), to deal in the Software without
-restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following
-conditions:
+  The MIT (X11) License
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
-
+=cut

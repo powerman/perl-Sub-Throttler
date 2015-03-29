@@ -1,12 +1,19 @@
 Revision history for Sub-Throttler
 
-0.2.1   Wed Mar 25 03:36:24 EET 2015
-	Fix doc.
-	Fix dependencies.
-	Relax timings in test.
+{{$NEXT}}
 
-0.2.0   Sun Dec 7 09:23:28 EET 2014
-	INCOMPATIBLE API CHANGE:
+v0.2.1  2015-03-25 03:36:24 EET
+	- Fix doc.
+	- Fix dependencies.
+	- Relax timings in test.
+
+v0.2.0  2014-12-07 09:23:28 EET
+	- Add support for throttling sync subs.
+	- Add support for CODEREF for non-anonymous functions.
+	- Add support for class methods and subclasses.
+	- Update tests.
+
+	[INCOMPATIBLE API CHANGE]
 	- rename Sub::Throttler::Rate::EV to Sub::Throttler::Periodic::EV
 	- user func $target return HASHREF instead of one/two scalar/array
 	- add sync acquire()
@@ -14,21 +21,16 @@ Revision history for Sub-Throttler
 	- removed used()
 	- removed :plugin export tag from Sub::Throttler
 
-	API CHANGE:
+	[API CHANGE]
 	- period() can be modified
 	- add load()
 	- add save()
 	- add Sub::Throttler::Rate::AnyEvent
 	- add Sub::Throttler::algo
 
-	Add support for throttling sync subs.
-	Add support for CODEREF for non-anonymous functions.
-	Add support for class methods and subclasses.
-	Update tests.
+v0.1.1  2014-07-26 13:50:13 EEST
+	- Fix tests to be less fragile.
 
-0.1.1   Sat Jul 26 13:50:13 EEST 2014
-	Fix tests to be less fragile.
-
-0.1.0	Fri Jul 25 17:31:44 EEST 2014
-	Initial public release.
+v0.1.0  2014-07-25 17:31:44 EEST
+	- Initial public release.
 

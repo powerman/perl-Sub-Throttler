@@ -5,7 +5,7 @@ use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
 use Devel::CheckOS qw(os_is);
-use Time::HiRes qw( time sleep clock_gettime CLOCK_MONOTONIC );
+use Time::HiRes qw( time sleep );
 
 BEGIN {
     plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MicrosoftWindows');
@@ -130,9 +130,7 @@ throttle_del($throttle2);
 
 @Result = ();
 $time = time;
-# diag "now=${\clock_gettime(CLOCK_MONOTONIC)} data=[@{$throttle->{used}{key}{data}}]";
 func(10);
-# diag "now=${\clock_gettime(CLOCK_MONOTONIC)} data=[@{$throttle->{used}{key}{data}}]";
 is_deeply \@Result, [10],
     'func';
 ok 0.07 < time-$time && time-$time < 0.13,

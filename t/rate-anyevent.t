@@ -15,7 +15,7 @@ BEGIN {
 use Sub::Throttler::Rate::AnyEvent;
 
 
-plan skip_all => 'Too many broken cpan tester setups.' if $ENV{AUTOMATED_TESTING};
+plan skip_all => 'Too many broken cpan tester setups.' if $ENV{AUTOMATED_TESTING} || $ENV{PERL_CPAN_REPORTER_CONFIG};
 
 
 my ($throttle, $t);

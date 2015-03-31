@@ -6,7 +6,7 @@ use utf8;
 use Carp;
 our @CARP_NOT = qw( Sub::Throttler );
 
-our $VERSION = 'v0.2.2';
+our $VERSION = 'v0.2.3';
 
 use parent qw( Sub::Throttler::algo );
 use Sub::Throttler qw( throttle_flush );
@@ -126,7 +126,7 @@ Sub::Throttler::Limit - throttle by quantity
 
 =head1 VERSION
 
-This document describes Sub::Throttler::Limit version v0.2.2
+This document describes Sub::Throttler::Limit version v0.2.3
 
 
 =head1 SYNOPSIS

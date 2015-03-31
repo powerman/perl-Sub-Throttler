@@ -6,7 +6,7 @@ use utf8;
 use Carp;
 our @CARP_NOT = qw( Sub::Throttler );
 
-our $VERSION = 'v0.2.2';
+our $VERSION = 'v0.2.3';
 
 use Scalar::Util qw( blessed );
 use List::Util qw( any );
@@ -87,7 +87,7 @@ Sub::Throttler::algo - base class for throttling algorithms
 
 =head1 VERSION
 
-This document describes Sub::Throttler::algo version v0.2.2
+This document describes Sub::Throttler::algo version v0.2.3
 
 
 =head1 SYNOPSIS

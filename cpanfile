@@ -2,8 +2,8 @@ requires 'perl', '5.010001';
 
 requires 'AnyEvent';
 requires 'EV';
+requires 'Export::Attrs';
 requires 'List::Util', '1.33';
-requires 'Perl6::Export::Attrs';
 requires 'Scalar::Util';
 requires 'Time::HiRes';
 requires 'parent';

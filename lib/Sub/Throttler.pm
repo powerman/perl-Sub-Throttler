@@ -7,7 +7,7 @@ use Carp;
 
 our $VERSION = 'v0.2.3';
 
-use Perl6::Export::Attrs;
+use Export::Attrs;
 use Scalar::Util qw( weaken refaddr blessed );
 
 

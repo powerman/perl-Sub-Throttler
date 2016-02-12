@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/powerman/perl-Sub-Throttler.svg?branch=master)](https://travis-ci.org/powerman/perl-Sub-Throttler)
-[![Coverage Status](https://coveralls.io/repos/powerman/perl-Sub-Throttler/badge.png?branch=master)](https://coveralls.io/r/powerman/perl-Sub-Throttler?branch=master)
+[![Coverage Status](https://coveralls.io/repos/powerman/perl-Sub-Throttler/badge.svg?branch=master)](https://coveralls.io/r/powerman/perl-Sub-Throttler?branch=master)
 
 # NAME
 
@@ -7,7 +7,7 @@ Sub::Throttler - Rate limit sync and async function calls
 
 # VERSION
 
-This document describes Sub::Throttler version v0.2.3
+This document describes Sub::Throttler version v0.2.4
 
 # SYNOPSIS
 
@@ -596,11 +596,11 @@ Feel free to fork the repository and submit pull requests.
 
 # AUTHOR
 
-Alex Efros <powerman@cpan.org>
+Alex Efros &lt;powerman@cpan.org>
 
 # COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2014-2015 by Alex Efros <powerman@cpan.org>.
+This software is Copyright (c) 2014-2015 by Alex Efros &lt;powerman@cpan.org>.
 
 This is free software, licensed under:
 

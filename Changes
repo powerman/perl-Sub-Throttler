@@ -2,6 +2,9 @@ Revision history for Sub-Throttler
 
 {{$NEXT}}
 
+v0.2.4  2016-02-12 20:34:00 EET
+	- Use Export::Attrs instead of Perl6::Export::Attrs.
+
 v0.2.3  2015-03-31 07:11:26 EEST
 	- Fix tests portability.
 

@@ -88,6 +88,8 @@ Sub::Throttler::algo - base class for throttling algorithms
 =head1 VERSION
 
 This document describes Sub::Throttler::algo version v0.2.6
+
+
 =head1 SYNOPSIS
 
     package Sub::Throttler::YourCustomAlgo;

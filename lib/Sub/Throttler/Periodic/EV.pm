@@ -149,6 +149,8 @@ Sub::Throttler::Periodic::EV - throttle by rate (quantity per time)
 =head1 VERSION
 
 This document describes Sub::Throttler::Periodic::EV version v0.2.6
+
+
 =head1 SYNOPSIS
 
     use Sub::Throttler::Periodic::EV;

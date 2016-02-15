@@ -127,6 +127,8 @@ Sub::Throttler::Limit - throttle by quantity
 =head1 VERSION
 
 This document describes Sub::Throttler::Limit version v0.2.6
+
+
 =head1 SYNOPSIS
 
     use Sub::Throttler::Limit;

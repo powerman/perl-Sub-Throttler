@@ -398,6 +398,8 @@ Sub::Throttler::Rate::AnyEvent - throttle by rate (quantity per time)
 =head1 VERSION
 
 This document describes Sub::Throttler::Rate::AnyEvent version v0.2.6
+
+
 =head1 SYNOPSIS
 
     use Sub::Throttler::Rate::AnyEvent;

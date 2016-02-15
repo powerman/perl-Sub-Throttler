@@ -5,7 +5,7 @@ use strict;
 use utf8;
 use Carp;
 
-our $VERSION = 'v0.2.4';
+our $VERSION = 'v0.2.5';
 
 use Export::Attrs;
 use Scalar::Util qw( weaken refaddr blessed );
@@ -364,8 +364,7 @@ Sub::Throttler - Rate limit sync and async function calls
 
 =head1 VERSION
 
-This document describes Sub::Throttler version v0.2.4
-
+This document describes Sub::Throttler version v0.2.5
 =head1 SYNOPSIS
 
     # Load throttling engine

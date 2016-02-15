@@ -94,6 +94,7 @@ sub load {
         for (@{ $data }) {
             if ($_ != Sub::Throttler::Rate::rr::EMPTY()) {
                 $_ -= $diff;
+                $_ = sprintf '%.6f', $_; # work around floating point precision issues
             }
         }
     }
@@ -171,6 +172,7 @@ sub save {
         for (@{ $data }) {
             if ($_ != Sub::Throttler::Rate::rr::EMPTY()) {
                 $_ += $diff;
+                $_ = sprintf '%.6f', $_; # work around floating point precision issues
             }
         }
     }
@@ -240,6 +242,7 @@ sub new {
 
 sub add {
     my ($self, $period, $time, $quantity) = @_;
+    $time = sprintf '%.6f', $time; # work around floating point precision issues
     my $len = @{ $self->{data} };
     # try_acquire() guarantee $quantity > 0, so we continue only if $len > 0
     # (thus avoid division by zero on % $len) and there is a chance to add
@@ -265,6 +268,7 @@ sub add {
 # Return time of acquiring first resource after $time or nothing.
 sub after {
     my ($self, $time) = @_;
+    $time = sprintf '%.6f', $time; # work around floating point precision issues
     # _tick() guarantee $time > EMPTY
     my $len = @{ $self->{data} };
     for (1 .. $len) {
@@ -276,6 +280,7 @@ sub after {
 
 sub del {
     my ($self, $time, $quantity) = @_;
+    $time = sprintf '%.6f', $time; # work around floating point precision issues
     # try_acquire() guarantee $quantity > 0
     # even if $time is already outdated, these elements should be removed
     # anyway in case {period} will be increased later

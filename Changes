@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 {{$NEXT}}
+	- Fix fragile tests.
 
 v0.2.4  2016-02-12 20:34:00 EET
 	- Use Export::Attrs instead of Perl6::Export::Attrs.

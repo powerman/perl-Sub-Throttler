@@ -4,6 +4,7 @@ use utf8;
 use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
+use Test::Mock::Time;
 
 use Sub::Throttler qw( :ALL );
 use Sub::Throttler::Limit;
@@ -97,6 +98,7 @@ sub method_delay {
 
 sub _method_delay {
     my ($self, $t, @p) = @_;
+    $$t = undef;
     push @Result, $p[0];
 }
 

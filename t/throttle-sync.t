@@ -4,6 +4,7 @@ use utf8;
 use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
+use Test::Mock::Time;
 use Devel::CheckOS qw(os_is);
 use Time::HiRes qw( time sleep );
 
@@ -75,12 +76,12 @@ $time = time;
 func(10);
 is_deeply \@Result, [10],
     'func';
-ok time-$time < 0.05,
+is time, $time,
     'no delay';
 $obj->method(30);
 is_deeply \@Result, [10,30],
     'method';
-ok 0.1 < time-$time && time-$time < 0.15,
+is time, $time+0.1,
     'with delay';
 sleep 0.1;
 
@@ -100,27 +101,27 @@ $time = time;
 func(10);
 is_deeply \@Result, [10],
     'func';
-ok time-$time < 0.05,
+is time, $time,
     'no delay';
 func(20);
 is_deeply \@Result, [10,20],
     'func';
-ok 0.1 < time-$time && time-$time < 0.15,
+is time, $time+=0.1,
     'with small delay';
 $obj->method(30);
 is_deeply \@Result, [10,20,30],
     'method';
-ok 0.2 < time-$time && time-$time < 0.25,
+is time, $time+=0.1,
     'with small delay';
 func(40);
 is_deeply \@Result, [10,20,30,40],
     'func';
-ok 0.5 < time-$time && time-$time < 0.55,
+is time, $time+=0.3,
     'with long delay';
 func(50);
 is_deeply \@Result, [10,20,30,40,50],
     'func';
-ok 0.6 < time-$time && time-$time < 0.65,
+is time, $time+0.1,
     'with small delay';
 
 #   * del($throttle2)
@@ -133,17 +134,17 @@ $time = time;
 func(10);
 is_deeply \@Result, [10],
     'func';
-ok 0.07 < time-$time && time-$time < 0.13,
+is time, $time+=0.1,
     'with small delay';
 func(20);
 is_deeply \@Result, [10,20],
     'func';
-ok 0.2 < time-$time && time-$time < 0.25,
+is time, $time+=0.1,
     'with small delay';
 func(30);
 is_deeply \@Result, [10,20,30],
     'func';
-ok 0.3 < time-$time && time-$time < 0.35,
+is time, $time+=0.1,
     'with small delay';
 
 #   * несколько add() с одинаковым объектом $throttle:
@@ -160,17 +161,17 @@ $time = time;
 func(10);
 is_deeply \@Result, [10],
     'func';
-ok time-$time < 0.05,
+is time, $time,
     'no delay';
 $obj->method(20);
 is_deeply \@Result, [10,20],
     'method';
-ok 0.1 < time-$time && time-$time < 0.15,
+is time, $time+=0.1,
     'with small delay';
 func(30);
 is_deeply \@Result, [10,20,30],
     'func';
-ok 0.2 < time-$time && time-$time < 0.25,
+is time, $time+=0.1,
     'with small delay';
 
 #     - $target-функции каждого add() срабатывают на одинаковые цели с разными $key
@@ -641,7 +642,7 @@ $time = time;
 top_func(10);
 is_deeply \@Result, ['top_func',10],
     'top_func, func';
-ok time-$time < 0.05,
+is time, $time,
     'no delay';
 
 

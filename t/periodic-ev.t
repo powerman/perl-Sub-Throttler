@@ -4,6 +4,7 @@ use utf8;
 use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
+use Test::Mock::Time;
 
 use Sub::Throttler::Periodic::EV;
 

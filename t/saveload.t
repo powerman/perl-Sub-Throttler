@@ -4,6 +4,7 @@ use utf8;
 use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
+use Test::Mock::Time;
 use Devel::CheckOS qw(os_is);
 use JSON::XS;
 use Time::HiRes qw( sleep );

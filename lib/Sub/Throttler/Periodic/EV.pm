@@ -6,7 +6,7 @@ use utf8;
 use Carp;
 our @CARP_NOT = qw( Sub::Throttler );
 
-our $VERSION = 'v0.2.5';
+our $VERSION = 'v0.2.6';
 
 use parent qw( Sub::Throttler::Limit );
 use Sub::Throttler qw( throttle_flush );
@@ -148,7 +148,7 @@ Sub::Throttler::Periodic::EV - throttle by rate (quantity per time)
 
 =head1 VERSION
 
-This document describes Sub::Throttler::Periodic::EV version v0.2.5
+This document describes Sub::Throttler::Periodic::EV version v0.2.6
 =head1 SYNOPSIS
 
     use Sub::Throttler::Periodic::EV;

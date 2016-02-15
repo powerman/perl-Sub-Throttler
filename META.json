@@ -54,6 +54,7 @@
             "Devel::CheckOS" : "0",
             "JSON::XS" : "0",
             "Test::Exception" : "0",
+            "Test::Mock::Time" : "0",
             "Test::More" : "0.96"
          }
       }

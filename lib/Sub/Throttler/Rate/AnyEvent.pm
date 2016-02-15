@@ -43,6 +43,7 @@ sub acquire {
         if ($quantity <= $self->{limit}) {
             my $now = clock_gettime(CLOCK_MONOTONIC);
             my $delay = $self->{used}{$key}->get($quantity) + $self->{period} - $now;
+            $delay = sprintf '%.6f', $delay; # work around floating point precision issues
             # resource may expire between try_acquire() and clock_gettime()
             if ($delay > 0) {
                 sleep $delay;
@@ -255,7 +256,8 @@ sub add {
     # to be largest of all elements, so all elements between (inclusive)
     # $self->{next} and $required are guaranteed to be either EMPTY
     # or <= $self->{next}-1 element, and $required element is largest of them
-    if ($self->{data}[$required] > $time - $period) {
+    my $since = sprintf '%.6f', $time - $period;     # work around floating point precision issues
+    if ($self->{data}[$required] > $since) {
         return;
     }
     for (1 .. $quantity) {

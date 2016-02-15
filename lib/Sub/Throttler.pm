@@ -365,6 +365,8 @@ Sub::Throttler - Rate limit sync and async function calls
 =head1 VERSION
 
 This document describes Sub::Throttler version v0.2.5
+
+
 =head1 SYNOPSIS
 
     # Load throttling engine

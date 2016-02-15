@@ -8,7 +8,8 @@ Sub::Throttler - Rate limit sync and async function calls
 # VERSION
 
 This document describes Sub::Throttler version v0.2.5
-&#x3d;head1 SYNOPSIS
+
+# SYNOPSIS
 
     # Load throttling engine
     use Sub::Throttler qw( throttle_it );

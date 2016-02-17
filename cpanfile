@@ -18,6 +18,7 @@ on test => sub {
     requires 'Test::Exception';
     requires 'Test::Mock::Time';
     requires 'Test::More', '0.96';
+    recommends 'Sub::Util', '1.40';
 };
 
 on develop => sub {

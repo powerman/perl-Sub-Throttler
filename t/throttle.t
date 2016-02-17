@@ -671,7 +671,7 @@ my $func = sub {
 throws_ok { $func->() } qr/anonymous function/;
 
 SKIP: {
-    skip 'Sub::Util 1.40 not installed', 1 if !eval 'use Sub::Util 1.40 "set_subname"; 1';
+    skip 'Sub::Util 1.40 not installed', 1 if !eval { require Sub::Util; Sub::Util->VERSION('1.40'); Sub::Util->import('set_subname') };
     set_subname('deanonimized', $func);
     throws_ok { $func->() } qr/anonymous function/;
 }

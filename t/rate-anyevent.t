@@ -4,18 +4,15 @@ use utf8;
 use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
-use Devel::CheckOS qw(os_is);
+use Test::Mock::Time;
 use EV;
 use Time::HiRes qw( sleep );
 
 BEGIN {
-    plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MicrosoftWindows');
-    plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MacOSX');
+    eval { Time::HiRes->import(qw( CLOCK_MONOTONIC clock_gettime )) };
+    plan skip_all => 'Time::HiRes::clock_gettime(): unimplemented in this platform' if !exists &clock_gettime;
 }
 use Sub::Throttler::Rate::AnyEvent;
-
-
-plan skip_all => 'Too many broken cpan tester setups.' if $ENV{AUTOMATED_TESTING} || $ENV{PERL_CPAN_REPORTER_CONFIG};
 
 
 my ($throttle, $t);
@@ -30,7 +27,7 @@ my $Flush = 0;
 sub used {
     my ($throttle, $key) = @_;
     return undef if !exists $throttle->{used}{$key};
-    my $time = Time::HiRes::clock_gettime(Time::HiRes::CLOCK_MONOTONIC);
+    my $time = clock_gettime(CLOCK_MONOTONIC);
     $time -= $throttle->{period};
     if ($time < 0) {
         $time = 0;
@@ -301,6 +298,7 @@ is used($throttle,'key5'), undef;
 $throttle = Sub::Throttler::Rate::AnyEvent->new(limit => 5);
 $throttle->try_acquire('id1', 'key1', 1);
 $throttle->try_acquire('id2', 'key2', 2);
+sleep 0.01; # needed because of Test::Mock::Time to make sure different acquires for 'key2' happens at different times
 $throttle->try_acquire('id3', 'key1', 4);
 $throttle->try_acquire('id3', 'key2', 3);
 $throttle->limit(3);
@@ -393,6 +391,7 @@ ok $throttle->try_acquire('id1','key',2),
     'acquired 2 (2/10)';
 ok $throttle->try_acquire('id2','key',3),
     'acquired 3 (5/10)';
+sleep 0.01; # needed because of Test::Mock::Time to make sure different acquires for 'key' happens at different times
 ok $throttle->try_acquire('id3','key',5),
     'acquired 5 (10/10)';
 $throttle->limit(5);

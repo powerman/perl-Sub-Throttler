@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 {{$NEXT}}
+	- Fix fragile tests.
 
 v0.2.7  2016-02-15 20:18:13 EET
 	- Fix POD.

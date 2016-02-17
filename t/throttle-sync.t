@@ -5,13 +5,13 @@ use open qw( :std :utf8 );
 use Test::More;
 use Test::Exception;
 use Test::Mock::Time;
-use Devel::CheckOS qw(os_is);
 use Time::HiRes qw( time sleep );
 
 BEGIN {
-    plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MicrosoftWindows');
-    plan skip_all => 'Time::HiRes::clock_gettime unimplemented' if os_is('MacOSX');
+    eval { Time::HiRes->import(qw( CLOCK_MONOTONIC clock_gettime )) };
+    plan skip_all => 'Time::HiRes::clock_gettime(): unimplemented in this platform' if !exists &clock_gettime;
 }
+
 use Sub::Throttler qw( :ALL );
 use Sub::Throttler::Limit;
 use Sub::Throttler::Rate::AnyEvent;

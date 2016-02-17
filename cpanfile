@@ -21,5 +21,6 @@ on test => sub {
 };
 
 on develop => sub {
+    requires 'Test::Distribution';
     requires 'Test::Perl::Critic';
 };

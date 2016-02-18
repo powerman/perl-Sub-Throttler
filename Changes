@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 {{$NEXT}}
+	- Update dependencies.
 
 v0.2.8  2016-02-17 20:38:52 EET
 	- Fix fragile tests.

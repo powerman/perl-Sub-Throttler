@@ -16,7 +16,7 @@ on configure => sub {
 on test => sub {
     requires 'JSON::XS';
     requires 'Test::Exception';
-    requires 'Test::Mock::Time';
+    requires 'Test::Mock::Time', 'v0.1.5';
     requires 'Test::More', '0.96';
     recommends 'Sub::Util', '1.40';
 };

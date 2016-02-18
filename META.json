@@ -10,7 +10,7 @@
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
-      "version" : "2"
+      "version" : 2
    },
    "name" : "Sub-Throttler",
    "no_index" : {
@@ -57,7 +57,7 @@
          "requires" : {
             "JSON::XS" : "0",
             "Test::Exception" : "0",
-            "Test::Mock::Time" : "0",
+            "Test::Mock::Time" : "v0.1.5",
             "Test::More" : "0.96"
          }
       }

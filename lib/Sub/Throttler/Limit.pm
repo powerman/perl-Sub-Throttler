@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use utf8;
 use Carp;
-our @CARP_NOT = qw( Sub::Throttler );
+our @CARP_NOT = qw( Sub::Throttler Sub::Throttler::Periodic::EV );
 
 our $VERSION = 'v0.2.8';
 

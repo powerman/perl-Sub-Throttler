@@ -65,27 +65,27 @@
    "provides" : {
       "Sub::Throttler" : {
          "file" : "lib/Sub/Throttler.pm",
-         "version" : "v0.2.9"
+         "version" : "v0.2.10"
       },
       "Sub::Throttler::Limit" : {
          "file" : "lib/Sub/Throttler/Limit.pm",
-         "version" : "v0.2.9"
+         "version" : "v0.2.10"
       },
       "Sub::Throttler::Periodic::EV" : {
          "file" : "lib/Sub/Throttler/Periodic/EV.pm",
-         "version" : "v0.2.9"
+         "version" : "v0.2.10"
       },
       "Sub::Throttler::Rate::AnyEvent" : {
          "file" : "lib/Sub/Throttler/Rate/AnyEvent.pm",
-         "version" : "v0.2.9"
+         "version" : "v0.2.10"
       },
       "Sub::Throttler::Rate::rr" : {
          "file" : "lib/Sub/Throttler/Rate/AnyEvent.pm",
-         "version" : "v0.2.9"
+         "version" : "v0.2.10"
       },
       "Sub::Throttler::algo" : {
          "file" : "lib/Sub/Throttler/algo.pm",
-         "version" : "v0.2.9"
+         "version" : "v0.2.10"
       }
    },
    "release_status" : "stable",
@@ -100,6 +100,6 @@
          "web" : "https://github.com/powerman/perl-Sub-Throttler"
       }
    },
-   "version" : "v0.2.9"
+   "version" : "v0.2.10"
 }
 

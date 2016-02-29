@@ -1,7 +1,10 @@
 Revision history for Sub-Throttler
 
 {{$NEXT}}
+
+v0.2.10  2016-02-29 23:49:59 EET
 	- Reformat doc.
+	- Fix fragile tests.
 
 v0.2.9  2016-02-18 16:53:48 EET
 	- Update dependencies.

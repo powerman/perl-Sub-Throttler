@@ -204,41 +204,41 @@ Use tag `:ALL` to import all of them.
 
 ## Enable throttling for existing functions/methods
 
-- throttle\_it
+### throttle\_it
 
-        my $orig_func = throttle_it('func');
-        my $orig_func = throttle_it('Some::func2');
+    my $orig_func = throttle_it('func');
+    my $orig_func = throttle_it('Some::func2');
 
-    This helper is able to replace with wrapper either sync function/method
-    or async function/method which receive **callback in last parameter**.
+This helper is able to replace with wrapper either sync function/method
+or async function/method which receive **callback in last parameter**.
 
-    That wrapper will call `$done->()` (release used resources, see
-    ["throttle\_me"](#throttle_me) for details about it) after sync function/method returns
-    or just before callback of async function/method will be called.
+That wrapper will call `$done->()` (release used resources, see
+["throttle\_me"](#throttle_me) for details about it) after sync function/method returns
+or just before callback of async function/method will be called.
 
-    If given function name without package it will look for that function in
-    caller's package.
+If given function name without package it will look for that function in
+caller's package.
 
-    Return reference to original function or throws if given function is not
-    exists.
+Return reference to original function or throws if given function is not
+exists.
 
-- throttle\_it\_asap
+### throttle\_it\_asap
 
-        my $orig_func = throttle_it_asap('func');
-        my $orig_func = throttle_it_asap('Some::func2');
+    my $orig_func = throttle_it_asap('func');
+    my $orig_func = throttle_it_asap('Some::func2');
 
-    Same as ["throttle\_it"](#throttle_it) but use high-priority "asap" queue for async
-    function/method calls.
+Same as ["throttle\_it"](#throttle_it) but use high-priority "asap" queue for async
+function/method calls.
 
-- throttle\_it\_sync
+### throttle\_it\_sync
 
-        my $orig_func = throttle_it_sync('func');
-        my $orig_func = throttle_it_sync('Some::func2');
+    my $orig_func = throttle_it_sync('func');
+    my $orig_func = throttle_it_sync('Some::func2');
 
-    Same as ["throttle\_it"](#throttle_it) but doesn't try to handle given function/method
-    as async even if it's called with CODEREF in last parameter.
+Same as ["throttle\_it"](#throttle_it) but doesn't try to handle given function/method
+as async even if it's called with CODEREF in last parameter.
 
-### custom wrapper
+### Custom Wrapper
 
 If you want to call `$done->()` after async function/method callback
 or before sync function/method will be actually called
@@ -313,136 +313,136 @@ write that function yourself (in some cases it's enough to write a
 control when exactly it should release used resources or cancel unused
 resources to let next delayed function/method run as soon as possible.
 
-- throttle\_me
+### throttle\_me
 
-        sub async_func {
-            my $done = &throttle_me || return;
-            my (@params) = @_;
-            if ('unable to do the work') {
-                $done->(0);
-                return;
-            }
-            ...
-            $done->();
+    sub async_func {
+        my $done = &throttle_me || return;
+        my (@params) = @_;
+        if ('unable to do the work') {
+            $done->(0);
             return;
         }
-        sub async_method {
-            my $done = &throttle_me || return;
-            my ($self, @params) = @_;
-            if ('unable to do the work') {
-                $done->(0);
-                return;
-            }
-            ...
-            $done->();
+        ...
+        $done->();
+        return;
+    }
+    sub async_method {
+        my $done = &throttle_me || return;
+        my ($self, @params) = @_;
+        if ('unable to do the work') {
+            $done->(0);
             return;
         }
+        ...
+        $done->();
+        return;
+    }
 
-    Support only async function/method, which can't return anything to caller
-    (because it call may be delayed because of throttling). When this
-    function/method will be executed it won't get anything useful from
-    caller() or wantarray() because it will be called from internals of
-    this module.
+Support only async function/method, which can't return anything to caller
+(because it call may be delayed because of throttling). When this
+function/method will be executed it won't get anything useful from
+caller() or wantarray() because it will be called from internals of
+this module.
 
-    You should use it exactly as it shown in these examples: it should be
-    called using form `&throttle_me` because it needs to modify your
-    function/method's `@_`.
+You should use it exactly as it shown in these examples: it should be
+called using form `&throttle_me` because it needs to modify your
+function/method's `@_`.
 
-    If your function/method should be delayed because of throttling it will
-    return false, and you should interrupt your function/method. Otherwise
-    it'll acquire "resources" needed to run your function/method and return
-    callback which you should call later to release these resources.
+If your function/method should be delayed because of throttling it will
+return false, and you should interrupt your function/method. Otherwise
+it'll acquire "resources" needed to run your function/method and return
+callback which you should call later to release these resources.
 
-    If your function/method has done it work (and thus "used" these resources)
-    `$done` should be called without parameters `$done->()` or with one
-    true param `$done->(1)`; if it hasn't done it work (and thus "not
-    used" these resources) it's better to call it with one false param
-    `$done->(0)` to cancel these unused resources and give a chance for
-    another function/method to reuse them.
+If your function/method has done it work (and thus "used" these resources)
+`$done` should be called without parameters `$done->()` or with one
+true param `$done->(1)`; if it hasn't done it work (and thus "not
+used" these resources) it's better to call it with one false param
+`$done->(0)` to cancel these unused resources and give a chance for
+another function/method to reuse them.
 
-    If you forget to call `$done` - you'll get a warning (and chances are
-    you'll soon run out of resources because of this and new throttled
-    functions/methods won't be run anymore), if you call it more than once -
-    exception will be thrown.
+If you forget to call `$done` - you'll get a warning (and chances are
+you'll soon run out of resources because of this and new throttled
+functions/methods won't be run anymore), if you call it more than once -
+exception will be thrown.
 
-    Anonymous functions are not supported.
+Anonymous functions are not supported.
 
-- throttle\_me\_asap
+### throttle\_me\_asap
 
-    Same as ["throttle\_me"](#throttle_me) except use `&throttle_me_asap`:
+Same as ["throttle\_me"](#throttle_me) except use `&throttle_me_asap`:
 
-            my $done = &throttle_me_asap || return;
+        my $done = &throttle_me_asap || return;
 
-    This will make this async function/method use high-priority "asap" queue
-    instead of normal queue.
+This will make this async function/method use high-priority "asap" queue
+instead of normal queue.
 
-- throttle\_me\_sync
+### throttle\_me\_sync
 
-    Similar to ["throttle\_me"](#throttle_me) but for sync function/method:
+Similar to ["throttle\_me"](#throttle_me) but for sync function/method:
 
-            my $done = &throttle_me_sync;
+        my $done = &throttle_me_sync;
 
-    Delaying sync function/method is implemented using sleep(), so caller()
-    and wantarray() will work as expected, so only difference from usual
-    function/method is needs to call `&throttle_me_sync` on start and then
-    later release resources.
+Delaying sync function/method is implemented using sleep(), so caller()
+and wantarray() will work as expected, so only difference from usual
+function/method is needs to call `&throttle_me_sync` on start and then
+later release resources.
 
-- done\_cb
+### done\_cb
 
-        my $cb = done_cb($done, sub {
-            my (@params) = @_;
+    my $cb = done_cb($done, sub {
+        my (@params) = @_;
+        ...
+    });
+
+    my $cb = done_cb($done, sub {
+        my ($extra1, $extra2, @params) = @_;
+        ...
+    }, $extra1, $extra2);
+
+    my $cb = done_cb($done, $class_or_object, 'method');
+    sub Class::Of::That::Object::method {
+        my ($self, @params) = @_;
+        ...
+    }
+
+    my $cb = done_cb($done, $class_or_object, 'method', $extra1, $extra2);
+    sub Class::Of::That::Object::method {
+        my ($self, $extra1, $extra2, @params) = @_;
+        ...
+    }
+
+This is a simple helper function used to make sure you won't forget to
+call `$done->()` in your async function/method with throttling support.
+
+First parameter must be ` $done ` callback, then either callback function
+or object (or class name) and name of it method, and then optionally any
+extra params for that callback function/object's method.
+
+Returns callback, which when called will first call `$done->()` and then
+given callback function or object's method with any extra params (if any)
+followed by it own params.
+
+Example:
+
+    # use this:
+    sub download {
+        my $done = &throttle_me || return;
+        my ($url) = @_;
+        $ua->get($url, done_cb($done, sub {
+            my ($ua, $tx) = @_;
+            ...
+        }));
+    }
+    # instead of this:
+    sub download {
+        my $done = &throttle_me || return;
+        my ($url) = @_;
+        $ua->get($url, sub {
+            my ($ua, $tx) = @_;
+            $done->();
             ...
         });
-
-        my $cb = done_cb($done, sub {
-            my ($extra1, $extra2, @params) = @_;
-            ...
-        }, $extra1, $extra2);
-
-        my $cb = done_cb($done, $class_or_object, 'method');
-        sub Class::Of::That::Object::method {
-            my ($self, @params) = @_;
-            ...
-        }
-
-        my $cb = done_cb($done, $class_or_object, 'method', $extra1, $extra2);
-        sub Class::Of::That::Object::method {
-            my ($self, $extra1, $extra2, @params) = @_;
-            ...
-        }
-
-    This is a simple helper function used to make sure you won't forget to
-    call `$done->()` in your async function/method with throttling support.
-
-    First parameter must be ` $done ` callback, then either callback function
-    or object (or class name) and name of it method, and then optionally any
-    extra params for that callback function/object's method.
-
-    Returns callback, which when called will first call `$done->()` and then
-    given callback function or object's method with any extra params (if any)
-    followed by it own params.
-
-    Example:
-
-        # use this:
-        sub download {
-            my $done = &throttle_me || return;
-            my ($url) = @_;
-            $ua->get($url, done_cb($done, sub {
-                my ($ua, $tx) = @_;
-                ...
-            }));
-        }
-        # instead of this:
-        sub download {
-            my $done = &throttle_me || return;
-            my ($url) = @_;
-            $ua->get($url, sub {
-                my ($ua, $tx) = @_;
-                $done->();
-                ...
-            });
-        }
+    }
 
 ## Implementing throttle algorithms/plugins
 
@@ -519,40 +519,40 @@ needed for application which uses that algorithm:
         return $state;
     }
 
-- throttle\_add
+### throttle\_add
 
-        throttle_add($throttle_plugin, sub {
-            my ($this, $name, @params) = @_;
-            # $this is undef or a class name or an object
-            # $name is a function or method name
-            # @params is function/method params
-            ...
-            return;                         # OR
-            return {key1=>$quantity1, ...};
-        });
+    throttle_add($throttle_plugin, sub {
+        my ($this, $name, @params) = @_;
+        # $this is undef or a class name or an object
+        # $name is a function or method name
+        # @params is function/method params
+        ...
+        return;                         # OR
+        return {key1=>$quantity1, ...};
+    });
 
-    This function usually used to implement helper methods in algorithm like
-    ["apply\_to" in Sub::Throttler::algo](https://metacpan.org/pod/Sub::Throttler::algo#apply_to),
-    ["apply\_to\_functions" in Sub::Throttler::algo](https://metacpan.org/pod/Sub::Throttler::algo#apply_to_functions),
-    ["apply\_to\_methods" in Sub::Throttler::algo](https://metacpan.org/pod/Sub::Throttler::algo#apply_to_methods). But if algorithm doesn't
-    implement such helpers it may be used directly by user to apply some
-    algorithm instance to selected functions/methods.
+This function usually used to implement helper methods in algorithm like
+["apply\_to" in Sub::Throttler::algo](https://metacpan.org/pod/Sub::Throttler::algo#apply_to),
+["apply\_to\_functions" in Sub::Throttler::algo](https://metacpan.org/pod/Sub::Throttler::algo#apply_to_functions),
+["apply\_to\_methods" in Sub::Throttler::algo](https://metacpan.org/pod/Sub::Throttler::algo#apply_to_methods). But if algorithm doesn't
+implement such helpers it may be used directly by user to apply some
+algorithm instance to selected functions/methods.
 
-- throttle\_del
+### throttle\_del
 
-        throttle_del();
-        throttle_del($throttle_plugin);
+    throttle_del();
+    throttle_del($throttle_plugin);
 
-    Undo previous ["throttle\_add"](#throttle_add) calls with `$throttle_plugin` in first
-    param or all of them if given no param. This is rarely useful, usually you
-    setup throttling when your app initializes and then doesn't change it.
+Undo previous ["throttle\_add"](#throttle_add) calls with `$throttle_plugin` in first
+param or all of them if given no param. This is rarely useful, usually you
+setup throttling when your app initializes and then doesn't change it.
 
-- throttle\_flush
+### throttle\_flush
 
-        throttle_flush();
+    throttle_flush();
 
-    Algorithm **must** call it each time quantity of some resources increases
-    (so there is a chance one of delayed functions/methods can be run now).
+Algorithm **must** call it each time quantity of some resources increases
+(so there is a chance one of delayed functions/methods can be run now).
 
 # SUPPORT
 
@@ -600,7 +600,7 @@ Alex Efros &lt;powerman@cpan.org>
 
 # COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2014-2015 by Alex Efros &lt;powerman@cpan.org>.
+This software is Copyright (c) 2014- by Alex Efros &lt;powerman@cpan.org>.
 
 This is free software, licensed under:
 

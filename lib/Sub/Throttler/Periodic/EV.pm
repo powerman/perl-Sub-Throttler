@@ -205,9 +205,7 @@ Nothing.
 L<Sub::Throttler::Periodic::EV> inherits all methods from L<Sub::Throttler::algo>
 and implements the following ones.
 
-=over
-
-=item new
+=head2 new
 
     my $throttle = Sub::Throttler::Periodic::EV->new;
     my $throttle = Sub::Throttler::Periodic::EV->new(period => 0.1, limit => 42);
@@ -218,21 +216,21 @@ Default C<period> is C<1.0>, C<limit> is C<1>.
 
 See L<Sub::Throttler::algo/"new"> for more details.
 
-=item period
+=head2 period
 
     my $period = $throttle->period;
     $throttle  = $throttle->period($period);
 
 Get or modify current C<period>.
 
-=item limit
+=head2 limit
 
     my $limit = $throttle->limit;
     $throttle = $throttle->limit(42);
 
 Get or modify current C<limit>.
 
-=item load
+=head2 load
 
     my $throttle = Sub::Throttler::Periodic::EV->load($state);
 
@@ -240,7 +238,7 @@ Create and return new instance of this algorithm.
 
 See L<Sub::Throttler::algo/"load"> for more details.
 
-=item save
+=head2 save
 
     my $state = $throttle->save();
 
@@ -248,8 +246,6 @@ Return current state of algorithm needed to restore it using L</"load">
 after application restart.
 
 See L<Sub::Throttler::algo/"save"> for more details.
-
-=back
 
 
 =head1 SUPPORT
@@ -304,7 +300,7 @@ Alex Efros E<lt>powerman@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2014-2015 by Alex Efros E<lt>powerman@cpan.orgE<gt>.
+This software is Copyright (c) 2014- by Alex Efros E<lt>powerman@cpan.orgE<gt>.
 
 This is free software, licensed under:
 

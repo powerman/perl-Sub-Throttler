@@ -1,6 +1,7 @@
 Revision history for Sub-Throttler
 
 {{$NEXT}}
+	- Reformat doc.
 
 v0.2.9  2016-02-18 16:53:48 EET
 	- Update dependencies.

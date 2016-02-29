@@ -128,9 +128,7 @@ module inherited from this base class. They isn't required by throttling
 engine so your algorithm may choose to not implement them, but they
 usually needed for user so it's good idea to provide them.
 
-=over
-
-=item new
+=head3 new
 
     my $throttle = Sub::Throttler::YourCustomAlgo->new(...);
 
@@ -144,7 +142,7 @@ L</"apply_to_functions"> or L</"apply_to_methods"> or L</"apply_to"> or
 L<Sub::Throttler/"throttle_add">. You don't have to keep returned object
 after you've configured throttling by calling these methods.
 
-=item load
+=head3 load
 
     my $throttle = Sub::Throttler::YourCustomAlgo->load($state);
 
@@ -163,7 +161,7 @@ cases it won't be possible to release resources acquired while previous
 run of this application (when save() was called), so it may be a bad idea
 to restore acquired state of these resources while load().
 
-=item save
+=head3 save
 
     my $state = $throttle->save(...);
 
@@ -177,15 +175,11 @@ keep information about used resources between application restarts (to
 protect against occasional crashes it make sense to save current state
 every few seconds/minutes).
 
-=back
-
 =head2 Activate throttle for selected subroutines
 
 Methods listed in this section are implemented in L<Sub::Throttler::algo>.
 
-=over
-
-=item apply_to_functions
+=head3 apply_to_functions
 
     $throttle = $throttle->apply_to_functions;
     $throttle = $throttle->apply_to_functions('func', 'Some::func2');
@@ -197,7 +191,7 @@ caller's package for that name).
 
 All affected functions will use C<1> resource named C<"default">.
 
-=item apply_to_methods
+=head3 apply_to_methods
 
     $throttle = $throttle->apply_to_methods;
     $throttle = $throttle->apply_to_methods('Class');
@@ -215,7 +209,7 @@ object of that Class.
 
 All affected methods will use C<1> resource named C<"default">.
 
-=item apply_to
+=head3 apply_to
 
     $throttle = $throttle->apply_to(sub {
         my ($this, $name, @params) = @_;
@@ -245,8 +239,6 @@ This is most complex but also most flexible way to configure throttling -
 you can introspect what function/method and with what params was called
 and return which and how many resources it should acquire before run.
 
-=back
-
 =head2 Manual resource management
 
 It's unlikely you'll need to manually manage resources, but it's possible
@@ -257,9 +249,7 @@ run anymore.
 All methods listed below isn't implemented in L<Sub::Throttler::algo>,
 they must be provided by algorithm module inherited from this base class.
 
-=over
-
-=item acquire
+=head3 acquire
 
     $throttle = $throttle->acquire($id, $key, $quantity);
 
@@ -269,7 +259,7 @@ available right now but will become available later (this depends on
 throttling algorithm) it will wait (using sleep()) until resource will be
 available.
 
-=item try_acquire
+=head3 try_acquire
 
     my $is_acquired = $throttle->try_acquire($id, $key, $quantity);
 
@@ -283,7 +273,7 @@ or refaddr() of your own variables.
 Will throw if some C<$key> will be acquired more than once by same C<$id>
 or C<$quantity> is non-positive.
 
-=item release
+=head3 release
 
     $throttle = $throttle->release($id);
 
@@ -292,7 +282,7 @@ L</"acquire"> or L</"try_acquire"> using this C<$id> (this may or may not
 make them immediately available for acquiring again depending on
 plugin/algorithms).
 
-=item release_unused
+=head3 release_unused
 
     $throttle = $throttle->release_unused($id);
 
@@ -302,8 +292,6 @@ L</"acquire"> or L</"try_acquire"> using this C<$id>.
 Treat these resources as unused, to make it possible to reuse them as soon
 as possible (this may or may not differ from L</"release"> depending on
 plugin/algorithms).
-
-=back
 
 
 =head1 SUPPORT
@@ -358,7 +346,7 @@ Alex Efros E<lt>powerman@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2014-2015 by Alex Efros E<lt>powerman@cpan.orgE<gt>.
+This software is Copyright (c) 2014- by Alex Efros E<lt>powerman@cpan.orgE<gt>.
 
 This is free software, licensed under:
 

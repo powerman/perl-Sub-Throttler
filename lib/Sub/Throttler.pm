@@ -569,9 +569,7 @@ Use tag C<:ALL> to import all of them.
 
 =head2 Enable throttling for existing functions/methods
 
-=over
-
-=item throttle_it
+=head3 throttle_it
 
     my $orig_func = throttle_it('func');
     my $orig_func = throttle_it('Some::func2');
@@ -589,7 +587,7 @@ caller's package.
 Return reference to original function or throws if given function is not
 exists.
 
-=item throttle_it_asap
+=head3 throttle_it_asap
 
     my $orig_func = throttle_it_asap('func');
     my $orig_func = throttle_it_asap('Some::func2');
@@ -597,7 +595,7 @@ exists.
 Same as L</"throttle_it"> but use high-priority "asap" queue for async
 function/method calls.
 
-=item throttle_it_sync
+=head3 throttle_it_sync
 
     my $orig_func = throttle_it_sync('func');
     my $orig_func = throttle_it_sync('Some::func2');
@@ -605,9 +603,7 @@ function/method calls.
 Same as L</"throttle_it"> but doesn't try to handle given function/method
 as async even if it's called with CODEREF in last parameter.
 
-=back
-
-=head3 custom wrapper
+=head3 Custom Wrapper
 
 If you want to call C<< $done->() >> after async function/method callback
 or before sync function/method will be actually called
@@ -682,9 +678,7 @@ L</"custom wrapper"> for existing function/method). This will let you
 control when exactly it should release used resources or cancel unused
 resources to let next delayed function/method run as soon as possible.
 
-=over
-
-=item throttle_me
+=head3 throttle_me
 
     sub async_func {
         my $done = &throttle_me || return;
@@ -738,7 +732,7 @@ exception will be thrown.
 
 Anonymous functions are not supported.
 
-=item throttle_me_asap
+=head3 throttle_me_asap
 
 Same as L</"throttle_me"> except use C<&throttle_me_asap>:
 
@@ -747,7 +741,7 @@ Same as L</"throttle_me"> except use C<&throttle_me_asap>:
 This will make this async function/method use high-priority "asap" queue
 instead of normal queue.
 
-=item throttle_me_sync
+=head3 throttle_me_sync
 
 Similar to L</"throttle_me"> but for sync function/method:
 
@@ -758,7 +752,7 @@ and wantarray() will work as expected, so only difference from usual
 function/method is needs to call C<&throttle_me_sync> on start and then
 later release resources.
 
-=item done_cb
+=head3 done_cb
 
     my $cb = done_cb($done, sub {
         my (@params) = @_;
@@ -814,8 +808,6 @@ Example:
             ...
         });
     }
-
-=back
 
 =head2 Implementing throttle algorithms/plugins
 
@@ -892,9 +884,7 @@ needed for application which uses that algorithm:
         return $state;
     }
 
-=over
-
-=item throttle_add
+=head3 throttle_add
 
     throttle_add($throttle_plugin, sub {
         my ($this, $name, @params) = @_;
@@ -913,7 +903,7 @@ L<Sub::Throttler::algo/"apply_to_methods">. But if algorithm doesn't
 implement such helpers it may be used directly by user to apply some
 algorithm instance to selected functions/methods.
 
-=item throttle_del
+=head3 throttle_del
 
     throttle_del();
     throttle_del($throttle_plugin);
@@ -922,14 +912,12 @@ Undo previous L</"throttle_add"> calls with C<$throttle_plugin> in first
 param or all of them if given no param. This is rarely useful, usually you
 setup throttling when your app initializes and then doesn't change it.
 
-=item throttle_flush
+=head3 throttle_flush
 
     throttle_flush();
 
 Algorithm B<must> call it each time quantity of some resources increases
 (so there is a chance one of delayed functions/methods can be run now).
-
-=back
 
 
 =head1 SUPPORT
@@ -984,7 +972,7 @@ Alex Efros E<lt>powerman@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2014-2015 by Alex Efros E<lt>powerman@cpan.orgE<gt>.
+This software is Copyright (c) 2014- by Alex Efros E<lt>powerman@cpan.orgE<gt>.
 
 This is free software, licensed under:
 

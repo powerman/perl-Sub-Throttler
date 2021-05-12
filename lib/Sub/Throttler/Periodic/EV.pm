@@ -163,7 +163,7 @@ This document describes Sub::Throttler::Periodic::EV version v0.2.10
     my $period = $throttle->period;
     $throttle->period(0.1);
     
-    # --- Activate throttle for selected subrouties
+    # --- Activate throttle for selected subroutines
     $throttle->apply_to_functions('Some::func', 'Other::func2', …);
     $throttle->apply_to_methods('Class', 'method', 'method2', …);
     $throttle->apply_to_methods($object, 'method', 'method2', …);
